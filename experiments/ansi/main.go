@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"flag"
+	"time"
 
 	// "flag"
 	"fmt"
@@ -24,6 +24,7 @@ func CalculateAveragingBlockDimension(termWidth, termHeight, imgWidth, imgHeight
 func Render(img image.Image) {
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
 	imageDim := img.Bounds().Size()
+	fmt.Printf("image widthxheight %vx%v\n", imageDim.X, imageDim.Y)
 
 	avgBlockWidth, avgBlockHeight := CalculateAveragingBlockDimension(width, height, imageDim.X, imageDim.Y)
 
@@ -104,10 +105,11 @@ func print[T any](arr []T) {
 func TrueColorRender(img image.Image) {
 	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
 	imageDim := img.Bounds().Size()
+	// fmt.Printf("image widthxheight %vx%v\n", imageDim.X, imageDim.Y)
 
 	avgBlockWidth, avgBlockHeight := CalculateAveragingBlockDimension(width, height, imageDim.X, imageDim.Y)
 
-	fmt.Printf("block widthxheight %vx%v\n", avgBlockWidth, avgBlockHeight)
+	// fmt.Printf("block widthxheight %vx%v\n", avgBlockWidth, avgBlockHeight)
 	screen := [][]string{}
 
 	for y := 0; y < imageDim.Y; y += avgBlockHeight {
@@ -117,8 +119,8 @@ func TrueColorRender(img image.Image) {
 			var blockR, blockG, blockB uint32 = 0, 0, 0
 			var total uint32 = 0
 
-			for _y := y; _y < min(y+avgBlockHeight, imageDim.Y); _y += avgBlockHeight {
-				for _x := x; _x < min(x+avgBlockWidth, imageDim.X); _x += avgBlockWidth {
+			for _y := y; _y < min(y+avgBlockHeight, imageDim.Y); _y++{
+				for _x := x; _x < min(x+avgBlockWidth, imageDim.X); _x++{
 					r, g, b, _ := img.At(_x, _y).RGBA()
 
 					r = r >> 8
@@ -163,33 +165,33 @@ func TrueColorRender(img image.Image) {
 }
 func main() {
 
-	// for i := 1; i < 740; i++ {
-	// 	filename := fmt.Sprintf("frame_%03d.png", i)
-	// 	file, err := os.Open(filename)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	img, _, err := image.Decode(file)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	Render(img)
-	// 	time.Sleep(time.Millisecond * 100)
-	// 	Clear()
-	// }
+	for i := 1; i < 740; i++ {
+		filename := fmt.Sprintf("./assets/frame_%03d.png", i)
+		file, err := os.Open(filename)
+		if err != nil {
+			panic(err)
+		}
+		img, _, err := image.Decode(file)
+		if err != nil {
+			panic(err)
+		}
+		TrueColorRender(img)
+		time.Sleep(time.Millisecond * 10)
+		Clear()
+	}
 
-	var filename string
-	flag.StringVar(&filename, "f", "", "")
-	flag.Parse()
-	file, err := os.Open(filename)
-	if err != nil {
-		panic(err)
-	}
-	img, _, err := image.Decode(file)
-	if err != nil {
-		panic(err)
-	}
+	// var filename string
+	// flag.StringVar(&filename, "f", "", "")
+	// flag.Parse()
+	// file, err := os.Open(filename)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// img, _, err := image.Decode(file)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	// Render(img)
-	TrueColorRender(img)
-	Clear()
+	// TrueColorRender(img)
+	// Clear()
 }
