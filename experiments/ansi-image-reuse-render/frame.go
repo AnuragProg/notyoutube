@@ -31,6 +31,7 @@ func NewFrame(frameInput io.Reader) (Frame, error) {
 
 	for row:=0; row<imageSize.Y; row++{
 		for col:=0; col<imageSize.X; col++{
+
 			color := image.At(col, row)
 			r, g, b, _ := color.RGBA()
 

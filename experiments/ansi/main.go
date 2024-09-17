@@ -176,6 +176,7 @@ func main() {
 			panic(err)
 		}
 		TrueColorRender(img)
+		// Render(img)
 		time.Sleep(time.Millisecond * 10)
 		Clear()
 	}
