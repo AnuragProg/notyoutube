@@ -1,8 +1,7 @@
-package log
+package logger
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -38,6 +37,7 @@ func NewBatchLogger(writer io.WriteCloser, flushThreshold int, flushInterval tim
 	return batchLogger
 }
 
+// Periodically flush buffer contents
 func (logger *BatchLogger) periodicFlush() {
 	ticker := time.NewTicker(logger.flushInterval)
 	defer ticker.Stop()
@@ -52,6 +52,7 @@ func (logger *BatchLogger) periodicFlush() {
 	}
 }
 
+// Flush buffer content to writer
 func (logger *BatchLogger) Flush() error {
 	logger.bufferMut.Lock()
 	defer logger.bufferMut.Unlock()

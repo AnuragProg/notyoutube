@@ -1,10 +1,11 @@
-package log
+package logger
 
 import (
 	"encoding/json"
 	"io"
 
 	"github.com/rs/zerolog"
+	"github.com/anuragprog/notyoutube/file-service/types/logger"
 )
 
 type ZeroLogger struct {
@@ -25,7 +26,7 @@ func NewZeroLogger(writer io.WriteCloser, serviceName, environment string) *Zero
 }
 
 // Utility function to append/prepend base log data to the logger
-func adjustBaseAPILogInZeroLogEvent(event *zerolog.Event, apiLog BaseAPILog) *zerolog.Event {
+func adjustBaseAPILogInZeroLogEvent(event *zerolog.Event, apiLog logger.BaseAPILog) *zerolog.Event {
 	queryParamsJson, _ := json.Marshal(apiLog.QueryParams)
 	requestHeadersJson, _ := json.Marshal(apiLog.RequestHeaders)
 	miscellaneousJson, _ := json.Marshal(apiLog.Miscellaneous)
@@ -44,7 +45,7 @@ func adjustBaseAPILogInZeroLogEvent(event *zerolog.Event, apiLog BaseAPILog) *ze
 		RawJSON("miscellaneous", miscellaneousJson)
 }
 
-func (zeroLogger *ZeroLogger) LogAPIInfo(apiLog APIInfoLog) {
+func (zeroLogger *ZeroLogger) LogAPIInfo(apiLog logger.APIInfoLog) {
 	adjustBaseAPILogInZeroLogEvent(
 		zeroLogger.internalLogger.Info(),
 		apiLog.BaseAPILog,
@@ -54,7 +55,7 @@ func (zeroLogger *ZeroLogger) LogAPIInfo(apiLog APIInfoLog) {
 		Send()
 }
 
-func (zeroLogger *ZeroLogger) LogAPIDebug(apiLog APIDebugLog) {
+func (zeroLogger *ZeroLogger) LogAPIDebug(apiLog logger.APIDebugLog) {
 	adjustBaseAPILogInZeroLogEvent(
 		zeroLogger.internalLogger.Info(),
 		apiLog.BaseAPILog,
@@ -63,7 +64,7 @@ func (zeroLogger *ZeroLogger) LogAPIDebug(apiLog APIDebugLog) {
 		Send()
 }
 
-func (zeroLogger *ZeroLogger) LogAPIWarning(apiLog APIWarningLog) {
+func (zeroLogger *ZeroLogger) LogAPIWarning(apiLog logger.APIWarningLog) {
 	adjustBaseAPILogInZeroLogEvent(
 		zeroLogger.internalLogger.Info(),
 		apiLog.BaseAPILog,
@@ -71,7 +72,7 @@ func (zeroLogger *ZeroLogger) LogAPIWarning(apiLog APIWarningLog) {
 		Send()
 }
 
-func (zeroLogger *ZeroLogger) LogAPIError(apiLog APIErrorLog) {
+func (zeroLogger *ZeroLogger) LogAPIError(apiLog logger.APIErrorLog) {
 	adjustBaseAPILogInZeroLogEvent(
 		zeroLogger.internalLogger.Info(),
 		apiLog.BaseAPILog,

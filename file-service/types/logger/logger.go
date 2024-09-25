@@ -1,12 +1,14 @@
-package log
+package logger
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/anuragprog/notyoutube/file-service/utils/errors"
+	"github.com/anuragprog/notyoutube/file-service/types/errors"
 )
 
 type BaseAPILog struct {
@@ -70,6 +72,29 @@ type APIErrorLog struct {
 	ErrorMessage string           `json:"error_message"`
 }
 
+func getRequestBody(c *fiber.Ctx) []byte {
+
+	// in case of form data just log the key value pairs and a place holder for indicating present file
+	form, err := c.MultipartForm()
+	if err != nil {
+		formValue := map[string]interface{}{}
+		for key, value := range form.Value {
+			formValue[key] = value
+		}
+		for key, value := range form.File {
+			formValue[key] = fmt.Sprintf("<%v files>", len(value))
+		}
+		formJson, _ := json.Marshal(formValue)
+		return formJson
+	}
+	
+
+	// parse body of other request
+	requestBody := make([]byte, len(c.Request().Body()))
+	copy(requestBody, c.Request().Body())
+	return requestBody
+}
+
 func newAPIBaseLog(c *fiber.Ctx, timestamp time.Time, miscellaneous map[string]interface{}) BaseAPILog {
 	method := string(c.Request().Header.Method())
 	endpoint := strings.Clone(c.OriginalURL())
@@ -95,8 +120,8 @@ func newAPIBaseLog(c *fiber.Ctx, timestamp time.Time, miscellaneous map[string]i
 		copiedKey := strings.Clone(key)
 		requestHeaders[copiedKey] = copiedValues
 	}
-	requestBody := make([]byte, len(c.Request().Body()))
-	copy(requestBody, c.Request().Body())
+
+	requestBody := getRequestBody(c)
 
 	return BaseAPILog{
 		LogType:   "api",

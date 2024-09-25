@@ -12,6 +12,15 @@ type APIError struct {
 	StackTrace string
 }
 
+func NewAPIError(statusCode int, messagef string, msgArgs ...interface{}) APIError {
+	return APIError{
+		Inner: nil,
+		Message: fmt.Sprintf(messagef, msgArgs...),
+		StatusCode: statusCode,
+		StackTrace: string(debug.Stack()),
+	}
+}
+
 func IntoAPIError(err error, statusCode int, messagef string, msgArgs ...interface{}) APIError {
 	return APIError{
 		Inner:   err,

@@ -5,11 +5,12 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/anuragprog/notyoutube/file-service/utils/errors"
-	"github.com/anuragprog/notyoutube/file-service/utils/log"
+	"github.com/anuragprog/notyoutube/file-service/types/errors"
+	loggerType "github.com/anuragprog/notyoutube/file-service/types/logger"
+	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
 )
 
-func GetLoggerMiddleware(appLogger log.Logger) fiber.Handler {
+func GetLoggerMiddleware(appLogger loggerRepo.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 
 		requestStart := time.Now()
@@ -19,11 +20,11 @@ func GetLoggerMiddleware(appLogger log.Logger) fiber.Handler {
 		switch err := err.(type) {
 
 		case errors.APIError:
-			severity := log.API_ERROR_SEVERITY_MINOR
+			severity := loggerType.API_ERROR_SEVERITY_MINOR
 			if err.StatusCode >= 500 {
-				severity = log.API_ERROR_SEVERITY_MAJOR
+				severity = loggerType.API_ERROR_SEVERITY_MAJOR
 			}
-			errorLog := log.NewAPIErrorLog(
+			errorLog := loggerType.NewAPIErrorLog(
 				c,
 				requestStart,
 				latency,
@@ -34,12 +35,12 @@ func GetLoggerMiddleware(appLogger log.Logger) fiber.Handler {
 			go appLogger.LogAPIError(errorLog)
 
 		case *fiber.Error:
-			severity := log.API_ERROR_SEVERITY_MINOR
+			severity := loggerType.API_ERROR_SEVERITY_MINOR
 			if err.Code >= 500 {
-				severity = log.API_ERROR_SEVERITY_MAJOR
+				severity = loggerType.API_ERROR_SEVERITY_MAJOR
 			}
 			apiErr := errors.IntoAPIError(err, err.Code, err.Message)
-			errorLog := log.NewAPIErrorLog(
+			errorLog := loggerType.NewAPIErrorLog(
 				c,
 				requestStart,
 				latency,
@@ -50,15 +51,13 @@ func GetLoggerMiddleware(appLogger log.Logger) fiber.Handler {
 			go appLogger.LogAPIError(errorLog)
 
 		case nil:
-			apiLog := log.NewAPIInfoLog(
+			apiLog := loggerType.NewAPIInfoLog(
 				c,
 				requestStart,
 				latency,
 				map[string]interface{}{},
 			)
 			go appLogger.LogAPIInfo(apiLog)
-
-		default:
 
 		}
 
