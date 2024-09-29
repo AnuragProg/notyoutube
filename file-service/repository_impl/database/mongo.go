@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	databaseType "github.com/anuragprog/notyoutube/file-service/types/database"
+	errType "github.com/anuragprog/notyoutube/file-service/types/errors"
 )
 
 type MongoDatabase struct {
@@ -17,16 +18,16 @@ type MongoDatabase struct {
 	rawVideoCol *mongo.Collection
 }
 
-func NewMongoDatabase(uri string) (*MongoDatabase, error) {
+func NewMongoDatabase(uri, dbName, rawVideoCol string) (*MongoDatabase, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, err
 	}
-	db := client.Database("not-youtube")
+	db := client.Database(dbName)
 	return &MongoDatabase{
 		client:   client,
 		db:       db,
-		rawVideoCol: db.Collection("raw-videos"),
+		rawVideoCol: db.Collection(rawVideoCol),
 	}, nil
 }
 
@@ -46,7 +47,7 @@ func (md *MongoDatabase) CreateRawVideoMetadata(ctx context.Context, metadata da
 func (md *MongoDatabase) GetRawVideoMetadata(ctx context.Context, id string) (*databaseType.RawVideoMetadata, error) {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, errors.New("invalid video id")
+		return nil, errType.InvalidQuery
 	}
 	filter := bson.M{"_id": objectId}
 
@@ -55,7 +56,7 @@ func (md *MongoDatabase) GetRawVideoMetadata(ctx context.Context, id string) (*d
 	if err != nil {
 		switch {
 		case errors.Is(err, mongo.ErrNoDocuments):
-			return nil, errors.New("video metadata not found")
+			return nil, errType.RecordNotFound
 		default:
 			return nil, err
 		}
@@ -68,7 +69,7 @@ func (md *MongoDatabase) GetRawVideoMetadata(ctx context.Context, id string) (*d
 func (md *MongoDatabase) UpdateRawVideoMetadata(ctx context.Context, id string, metadata databaseType.UpdateRawVideoMetadata) error {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return errors.New("invalid video id")
+		return errType.InvalidQuery
 	}
 
 	update := bson.M{"$set": databaseType.RetrieveFieldsToBeUpdated(metadata)}
@@ -77,7 +78,7 @@ func (md *MongoDatabase) UpdateRawVideoMetadata(ctx context.Context, id string, 
 		return err
 	}
 	if result.ModifiedCount == 0 {
-		return errors.New("no video was updated")
+		return errType.RecordNotFound
 	}
 	return nil
 }
@@ -85,7 +86,7 @@ func (md *MongoDatabase) UpdateRawVideoMetadata(ctx context.Context, id string, 
 func (md *MongoDatabase) DeleteRawVideoMetadata(ctx context.Context, id string) error {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return errors.New("invalid video id")
+		return errType.InvalidQuery
 	}
 	filter := bson.M{"_id": objectId}
 
@@ -94,7 +95,7 @@ func (md *MongoDatabase) DeleteRawVideoMetadata(ctx context.Context, id string) 
 		return err
 	}
 	if result.DeletedCount == 0 {
-		return errors.New("no video was deleted")
+		return errType.RecordNotFound
 	}
 	return nil
 }

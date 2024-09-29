@@ -15,7 +15,7 @@ type MinioStore struct {
 	client *minio.Client
 }
 
-func NewMinioStore(minioURI, defaultBucket, minioServerAccessKey, minioServerSecretKey string) (*MinioStore, error) {
+func NewMinioStore(minioURI, minioServerAccessKey, minioServerSecretKey string) (*MinioStore, error) {
 	// create client
 	minioClient, err := minio.New(minioURI, &minio.Options{
 		Creds: credentials.NewStaticV4(minioServerAccessKey, minioServerSecretKey, ""),
@@ -72,4 +72,9 @@ func (ms *MinioStore) ObjectExists(ctx context.Context, bucketName string, objec
 		return false, err
 	}
 	return true, nil
+}
+
+
+func (ms *MinioStore) Close() error {
+	return nil
 }

@@ -5,17 +5,21 @@ import (
 	"os"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/anuragprog/notyoutube/file-service/configs"
 	"github.com/anuragprog/notyoutube/file-service/handlers"
 	"github.com/anuragprog/notyoutube/file-service/middlewares"
+	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
 	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
-	loggerImplRepo "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
+	databaseRepo "github.com/anuragprog/notyoutube/file-service/repository/database"
+	storeRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/store"
+	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
+	databaseRepoImpl"github.com/anuragprog/notyoutube/file-service/repository_impl/database"
+	"github.com/gofiber/fiber/v2"
 )
 
 var (
-	appLogger = loggerImplRepo.NewZeroLogger(
-		loggerImplRepo.NewBatchLogger(
+	appLogger = loggerRepoImpl.NewZeroLogger(
+		loggerRepoImpl.NewBatchLogger(
 			os.Stdout,
 			10<<10, // 10kb
 			time.Second*10,
@@ -28,7 +32,20 @@ var (
 func main(){
 	defer appLogger.Close()
 
-	app := SetupRouter(appLogger)
+	minio, err := storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
+	if err != nil {
+		panic(err)
+	}
+	defer minio.Close()
+	storeManager := storeRepo.NewStoreManager(configs.STORE_BUCKET, minio)
+
+	db, err := databaseRepoImpl.NewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME, configs.MONGO_RAW_VIDEO_COL)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	app := SetupRouter(db, storeManager, appLogger)
 	doneChan := make(chan bool)
 
 	go func(){
@@ -43,7 +60,11 @@ func main(){
 	fmt.Println("Server stopped")
 }
 
-func SetupRouter(appLogger loggerRepo.Logger) *fiber.App {
+func SetupRouter(
+	db databaseRepo.Database,
+	storeManager *storeRepo.StoreManager,
+	appLogger loggerRepo.Logger,
+) *fiber.App {
 
 	app := fiber.New(fiber.Config{
 		ServerHeader: "not-youtube",
@@ -65,9 +86,9 @@ func SetupRouter(appLogger loggerRepo.Logger) *fiber.App {
 
 	rawVideoGrp := api.Group("/raw-video")
 	{
-		rawVideoGrp.Get("", )
-		rawVideoGrp.Post("", )
-		rawVideoGrp.Patch("", )
+		rawVideoGrp.Get("", handlers.GetRawVideoMetadatasHandler(db))
+		rawVideoGrp.Get("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
+		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager))
 	}
 
 	return app

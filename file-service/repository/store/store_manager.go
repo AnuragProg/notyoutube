@@ -18,6 +18,7 @@ var resourceLocations = map[Resource]string{
 	RAW_VIDEO: "raw_videos",
 }
 
+// Store manager book keeps the resource's location
 type StoreManager struct {
 	bucket string
 	store  Store
