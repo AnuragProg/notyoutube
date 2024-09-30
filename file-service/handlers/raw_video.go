@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"io"
 	"math"
 	"mime"
 	"net/http"
@@ -33,7 +34,7 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 			return errType.NewAPIError(http.StatusNotImplemented, "currently we accept only one file, and will in future have functionality to serve multiple files")
 		}
 
-		generatedMetadatas := make([]databaseType.RawVideoMetadata, len(files))
+		generatedMetadatas := make([]databaseType.RawVideoMetadata, 0, len(files))
 
 		for _, file := range files {
 			contentType := mime.TypeByExtension(filepath.Ext(file.Filename))
@@ -47,7 +48,6 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 			// create database entry
 			ctx, cancel := context.WithTimeout(context.Background(), configs.DEFAULT_TIMEOUT)
 			defer cancel()
-
 			generatedMetadata, err := db.CreateRawVideoMetadata(ctx, metadata)
 			switch {
 			case errors.Is(err, context.DeadlineExceeded):
@@ -107,7 +107,7 @@ func GetRawVideoMetadatasHandler(db databaseRepo.Database) fiber.Handler {
 
 func GetRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		videoId := c.Params("video_id", "")
+		videoId := c.Params("video_id")
 		ctx, cancel := context.WithTimeout(context.Background(), configs.DEFAULT_TIMEOUT)
 		defer cancel()
 		metadata, err := db.GetRawVideoMetadata(ctx, videoId)
@@ -126,6 +126,7 @@ func GetRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager)
 		var bufferTimeSecs int64 = 10                         // seconds
 		expectedDownloadTimeSecs := int64(math.Ceil((float64(metadata.FileSize) / assumedDownloadSpeedBytesPerSec))) + bufferTimeSecs
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*time.Duration(expectedDownloadTimeSecs))
+		defer cancel()
 		file, err := store.Download(ctx, storeRepo.RAW_VIDEO, metadata.Id)
 		switch {
 		case errors.Is(err, context.DeadlineExceeded):
@@ -136,7 +137,9 @@ func GetRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager)
 		defer file.Close()
 
 		c.Set("Content-Type", metadata.ContentType)
-		c.Response().SetBodyStream(file, -1)
+		if _, err := io.Copy(c.Response().BodyWriter(), file); err != nil {
+			return errType.IntoAPIError(err, http.StatusInternalServerError, err.Error())
+		}
 
 		return nil
 	}

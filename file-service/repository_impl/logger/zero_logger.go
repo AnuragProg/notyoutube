@@ -57,7 +57,7 @@ func (zeroLogger *ZeroLogger) LogAPIInfo(apiLog logger.APIInfoLog) {
 
 func (zeroLogger *ZeroLogger) LogAPIDebug(apiLog logger.APIDebugLog) {
 	adjustBaseAPILogInZeroLogEvent(
-		zeroLogger.internalLogger.Info(),
+		zeroLogger.internalLogger.Debug(),
 		apiLog.BaseAPILog,
 	).
 		Str("message", apiLog.Message).
@@ -66,7 +66,7 @@ func (zeroLogger *ZeroLogger) LogAPIDebug(apiLog logger.APIDebugLog) {
 
 func (zeroLogger *ZeroLogger) LogAPIWarning(apiLog logger.APIWarningLog) {
 	adjustBaseAPILogInZeroLogEvent(
-		zeroLogger.internalLogger.Info(),
+		zeroLogger.internalLogger.Warn(),
 		apiLog.BaseAPILog,
 	).
 		Send()
@@ -74,7 +74,7 @@ func (zeroLogger *ZeroLogger) LogAPIWarning(apiLog logger.APIWarningLog) {
 
 func (zeroLogger *ZeroLogger) LogAPIError(apiLog logger.APIErrorLog) {
 	adjustBaseAPILogInZeroLogEvent(
-		zeroLogger.internalLogger.Info(),
+		zeroLogger.internalLogger.Error(),
 		apiLog.BaseAPILog,
 	).
 		Int64("latency_in_ms", apiLog.LatencyInMs).

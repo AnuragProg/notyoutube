@@ -104,9 +104,9 @@ func (md *MongoDatabase) ListRawVideosMetadata(ctx context.Context, limit int, o
 
 	findOption := options.Find().
 		SetLimit(int64(limit)).
-		SetSkip(int64(offset))
+		SetSkip(int64(limit*offset))
 
-	cursor, err := md.rawVideoCol.Find(ctx, bson.M{}, findOption)
+	cursor, err := md.rawVideoCol.Find(ctx, bson.D{}, findOption)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -27,8 +26,6 @@ func NewMinioStore(minioURI, minioServerAccessKey, minioServerSecretKey string) 
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("Connected to Minio...")
 
 	return &MinioStore{
 		client: minioClient,

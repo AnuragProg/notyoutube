@@ -1,5 +1,6 @@
 package main
 
+
 import (
 	"fmt"
 	"os"
@@ -68,27 +69,27 @@ func SetupRouter(
 
 	app := fiber.New(fiber.Config{
 		ServerHeader: "not-youtube",
-		ErrorHandler: handlers.GetErrorHandler(),
+		BodyLimit: 50<<20, // 50 mb
 	})
 
 	// setup middlewares
 	// 1. setting up x-request-id header
 	app.Use(middlewares.GetRequestIdMiddleware())
-	// 2. setting up recover middleware (setting it before logger, so that when we catch a panic, will report as critical issue)
-	app.Use(middlewares.GetRecoverMiddleware(appLogger))
-	// 3. setting up logger (requires x-request-id, hence after 1st)
+	// 2. setting up logger (requires x-request-id, hence after 1st), also handles panics and reports as critical errors
 	app.Use(middlewares.GetLoggerMiddleware(appLogger))
+	// 3. setting error response handler (make sure it is called before logger middleware to handle custom api errors)
+	app.Use(middlewares.GetErrorResponseHandlerMiddleware())
 
 	// setup api
 	api := app.Group("/v1")
 
 	api.Get("/health", handlers.GetHealthHandler())
 
-	rawVideoGrp := api.Group("/raw-video")
+	rawVideoGrp := api.Group("/raw-videos")
 	{
+		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager))
 		rawVideoGrp.Get("", handlers.GetRawVideoMetadatasHandler(db))
 		rawVideoGrp.Get("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
-		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager))
 	}
 
 	return app

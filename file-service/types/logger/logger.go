@@ -76,7 +76,7 @@ func getRequestBody(c *fiber.Ctx) []byte {
 
 	// in case of form data just log the key value pairs and a place holder for indicating present file
 	form, err := c.MultipartForm()
-	if err != nil {
+	if err == nil {
 		formValue := map[string]interface{}{}
 		for key, value := range form.Value {
 			formValue[key] = value
