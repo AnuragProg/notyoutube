@@ -26,4 +26,6 @@ var (
 	MONGO_URI           = utils.GetEnvDefault("MONGO_URI", "mongodb://localhost:27017")
 	MONGO_DB_NAME       = utils.GetEnvDefault("MONGO_DB_NAME", "not_youtube")
 	MONGO_RAW_VIDEO_COL = utils.GetEnvDefault("MONGO_RAW_VIDEO_COL", "raw_videos")
+
+	KAFKA_BROKERS = utils.GetEnvListDefault("KAFKA_BROKERS", ",")
 )

@@ -1,6 +1,9 @@
 package utils
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Environment string
 
@@ -32,4 +35,11 @@ func GetEnvDefault(key, def string) string {
 		value = def
 	}
 	return value
+}
+
+func GetEnvListDefault(key, separator string, def ...string) []string {
+	value := os.Getenv(key)
+	result := strings.Split(value, separator)
+	if len(result) > 0 { return result }
+	return def
 }

@@ -9,9 +9,12 @@ import (
 	"github.com/anuragprog/notyoutube/file-service/configs"
 	"github.com/anuragprog/notyoutube/file-service/handlers"
 	"github.com/anuragprog/notyoutube/file-service/middlewares"
+	mqRepo "github.com/anuragprog/notyoutube/file-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
 	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
 	databaseRepo "github.com/anuragprog/notyoutube/file-service/repository/database"
+
+	mqRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/mq"
 	storeRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/store"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
 	databaseRepoImpl"github.com/anuragprog/notyoutube/file-service/repository_impl/database"
@@ -46,7 +49,12 @@ func main(){
 	}
 	defer db.Close()
 
-	app := SetupRouter(db, storeManager, appLogger)
+	mq, err := mqRepoImpl.NewKafkaClient(configs.KAFKA_BROKERS)
+	if err != nil {
+		panic(err)
+	}
+
+	app := SetupRouter(db, storeManager, appLogger, mq)
 	doneChan := make(chan bool)
 
 	go func(){
@@ -65,6 +73,7 @@ func SetupRouter(
 	db databaseRepo.Database,
 	storeManager *storeRepo.StoreManager,
 	appLogger loggerRepo.Logger,
+	mq mqRepo.MessageQueue,
 ) *fiber.App {
 
 	app := fiber.New(fiber.Config{
