@@ -3,6 +3,7 @@ package mq
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -26,6 +27,8 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 			if err := kcgh.messageHandler(message.Value); err != nil {
 				return err
 			}
+
+			// Auto commit flag whether set or not, this will handle the offsetting properly
 			session.MarkMessage(message, "")
 			session.Commit()
 
@@ -39,7 +42,9 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 type KafkaClient struct {
 	brokers   []string
 	producer  sarama.SyncProducer
-	consumers []sarama.ConsumerGroup
+
+	// Set of ConsumerGroup 
+	consumers *sync.Map
 }
 
 func getDefaultKafkaConfig() *sarama.Config {
@@ -57,7 +62,7 @@ func NewKafkaClient(brokers []string) (*KafkaClient, error) {
 		return nil, err
 	}
 
-	return &KafkaClient{brokers: brokers, producer: producer, consumers: []sarama.ConsumerGroup{}}, nil
+	return &KafkaClient{brokers: brokers, producer: producer, consumers: new(sync.Map)}, nil
 }
 
 // sends the message over the given topic, key for partitioning
@@ -84,6 +89,12 @@ func (kc *KafkaClient) ListenMessages(ctx context.Context, topics []string, grou
 			errChan<- err
 			return
 		}
+
+		kc.consumers.Store(group, struct{}{})
+		defer func(){
+			group.Close() // close the consumer group
+			kc.consumers.Delete(group) // delete the consumer group
+		}()
 
 		consumer := KafkaConsumerGroupHandler{
 			messageHandler: messageHandler,
@@ -112,11 +123,14 @@ func (kc *KafkaClient) Close() error {
 	if err != nil {
 		return err
 	}
-	for _, consumer := range kc.consumers {
-		err = consumer.Close()
-		if err != nil {
-			return err
+
+	kc.consumers.Range(func(key, value any) bool {
+		consumer, ok := key.(sarama.ConsumerGroup)
+		if !ok {
+			panic("consumer not of type KafkaConsumerGroupHandler")
 		}
-	}
-	return kc.client.Close()
+		consumer.Close()
+		return true
+	})
+	return nil
 }

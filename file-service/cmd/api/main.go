@@ -1,6 +1,5 @@
 package main
 
-
 import (
 	"fmt"
 	"os"
@@ -9,15 +8,15 @@ import (
 	"github.com/anuragprog/notyoutube/file-service/configs"
 	"github.com/anuragprog/notyoutube/file-service/handlers"
 	"github.com/anuragprog/notyoutube/file-service/middlewares"
+	databaseRepo "github.com/anuragprog/notyoutube/file-service/repository/database"
+	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/file-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
-	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
-	databaseRepo "github.com/anuragprog/notyoutube/file-service/repository/database"
 
+	databaseRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/database"
+	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
 	mqRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/mq"
 	storeRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/store"
-	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
-	databaseRepoImpl"github.com/anuragprog/notyoutube/file-service/repository_impl/database"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -27,13 +26,13 @@ var (
 			os.Stdout,
 			10<<10, // 10kb
 			time.Second*10,
-		), 
+		),
 		configs.SERVICE_NAME,
 		string(configs.ENVIRONMENT),
 	)
 )
 
-func main(){
+func main() {
 	defer appLogger.Close()
 
 	minio, err := storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
@@ -57,11 +56,11 @@ func main(){
 	app := SetupRouter(db, storeManager, appLogger, mq)
 	doneChan := make(chan bool)
 
-	go func(){
+	go func() {
 		if err := app.Listen(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
 			fmt.Println(err.Error())
 		}
-		doneChan<- true
+		doneChan <- true
 	}()
 
 	fmt.Printf("Server listening on %v\n", configs.API_PORT)
@@ -78,7 +77,7 @@ func SetupRouter(
 
 	app := fiber.New(fiber.Config{
 		ServerHeader: "not-youtube",
-		BodyLimit: 50<<20, // 50 mb
+		BodyLimit:    50 << 20, // 50 mb
 	})
 
 	// setup middlewares
