@@ -1,3 +1,9 @@
+/*
+Store Manager has been created purely for deciding where to store a certain resource in the store
+Except for deciding the location of the resource StoreManager has no other purpose and should not be coded that way
+*/
+
+
 package store
 
 import (

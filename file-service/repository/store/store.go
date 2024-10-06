@@ -5,6 +5,7 @@ import (
 	"io"
 )
 
+// INFO: Not to be used directly for performing operations on store instead use StoreManager for doing the same
 type Store interface {
 
 	// to make sure the handler closes the connection properly

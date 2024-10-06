@@ -3,23 +3,27 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"mime"
 	"net/http"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/anuragprog/notyoutube/file-service/configs"
 	databaseRepo "github.com/anuragprog/notyoutube/file-service/repository/database"
+	mqRepo "github.com/anuragprog/notyoutube/file-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
 	databaseType "github.com/anuragprog/notyoutube/file-service/types/database"
 	errType "github.com/anuragprog/notyoutube/file-service/types/errors"
+	mqType "github.com/anuragprog/notyoutube/file-service/types/mq"
 )
 
-func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager) fiber.Handler {
+func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager, mq *mqRepo.MessageQueueManager) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		form, err := c.MultipartForm()
 		if err != nil {
@@ -78,6 +82,21 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 			// append
 			generatedMetadatas = append(generatedMetadatas, generatedMetadata)
 		}
+
+		// push events to kafka queue
+		// TODO: add logging mechanism for kafka events 
+		var wg sync.WaitGroup
+		wg.Add(len(generatedMetadatas))
+		for _, metadata := range generatedMetadatas {
+			go func(metadata databaseType.RawVideoMetadata){
+				defer wg.Done()
+				if err := mq.PublishToRawVideoTopic(mqType.FromRawVideoMetadataToProtoRawVideoMetadata(metadata)); err != nil {
+					fmt.Println(err.Error())
+				}
+			}(metadata)
+		}
+		wg.Wait()
+
 		return c.Status(http.StatusCreated).JSON(generatedMetadatas)
 	}
 }

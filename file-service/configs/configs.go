@@ -8,7 +8,7 @@ import (
 
 const (
 	API_PORT     = 3000
-	SERVICE_NAME = "file-service"
+	SERVICE_NAME = "file-service" 
 )
 
 var (
@@ -16,6 +16,11 @@ var (
 	DEFAULT_PAGE_START int = 0
 	DEFAULT_PAGE_SIZE  int = 25
 	DEFAULT_TIMEOUT        = time.Second * 5
+
+	// To use noop external services 
+	USE_NOOP_DB = utils.GetEnvBoolDefault("USE_NOOP_DB", false)
+	USE_NOOP_STORE = utils.GetEnvBoolDefault("USE_NOOP_STORE", false)
+	USE_NOOP_MQ = utils.GetEnvBoolDefault("USE_NOOP_MQ", false)
 
 	STORE_BUCKET = utils.GetEnvDefault("STORE_BUCKET", "not-youtube")
 

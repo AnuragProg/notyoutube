@@ -10,3 +10,6 @@
 
 # node related ignored files/folders
 **/node_modules/
+
+# proto generated files
+**/*.pb.go

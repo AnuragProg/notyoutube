@@ -20,7 +20,7 @@ var validEnvs = [3]Environment{
 }
 
 func GetEnvironment(def Environment) Environment {
-	env := os.Getenv("environment")
+	env := os.Getenv("ENVIRONMENT")
 	for _, validEnv := range validEnvs {
 		if env == string(validEnv) {
 			return validEnv
@@ -42,4 +42,19 @@ func GetEnvListDefault(key, separator string, def ...string) []string {
 	result := strings.Split(value, separator)
 	if len(result) > 0 { return result }
 	return def
+}
+
+
+var boolStringMap = map[string]bool{
+	"true": true,
+	"false": false,
+}
+
+func GetEnvBoolDefault(key string, def bool) bool {
+	value := os.Getenv(key)
+	boolValue, ok := boolStringMap[value]
+	if !ok {
+		return def
+	}
+	return boolValue
 }

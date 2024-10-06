@@ -20,8 +20,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-var (
-	appLogger = loggerRepoImpl.NewZeroLogger(
+func main() {
+	appLogger := loggerRepoImpl.NewZeroLogger(
 		loggerRepoImpl.NewBatchLogger(
 			os.Stdout,
 			10<<10, // 10kb
@@ -30,30 +30,36 @@ var (
 		configs.SERVICE_NAME,
 		string(configs.ENVIRONMENT),
 	)
-)
-
-func main() {
 	defer appLogger.Close()
 
-	minio, err := storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
-	if err != nil {
-		panic(err)
+	var store storeRepo.Store
+	if configs.USE_NOOP_STORE {
+		store = storeRepoImpl.NewNoopStore()
+	}else {
+		store = storeRepoImpl.MustNewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
 	}
-	defer minio.Close()
-	storeManager := storeRepo.NewStoreManager(configs.STORE_BUCKET, minio)
+	defer store.Close()
+	var storeManager = storeRepo.NewStoreManager(configs.STORE_BUCKET, store)
 
-	db, err := databaseRepoImpl.NewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME, configs.MONGO_RAW_VIDEO_COL)
-	if err != nil {
-		panic(err)
+	
+	var db databaseRepo.Database
+	if configs.USE_NOOP_DB {
+		db = databaseRepoImpl.NewNoopDatabse()
+	}else {
+		db = databaseRepoImpl.MustNewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME, configs.MONGO_RAW_VIDEO_COL)
 	}
 	defer db.Close()
 
-	mq, err := mqRepoImpl.NewKafkaClient(configs.KAFKA_BROKERS)
-	if err != nil {
-		panic(err)
-	}
 
-	app := SetupRouter(db, storeManager, appLogger, mq)
+	var mq mqRepo.MessageQueue 
+	if configs.USE_NOOP_MQ {
+		mq = mqRepoImpl.NewNoopQueue()
+	}else {
+		mq = mqRepoImpl.MustNewKafkaQueue(configs.KAFKA_BROKERS)
+	}
+	var mqManager = mqRepo.NewMessageQueueManager(mq)
+
+	app := SetupRouter(db, storeManager, appLogger, mqManager)
 	doneChan := make(chan bool)
 
 	go func() {
@@ -72,7 +78,7 @@ func SetupRouter(
 	db databaseRepo.Database,
 	storeManager *storeRepo.StoreManager,
 	appLogger loggerRepo.Logger,
-	mq mqRepo.MessageQueue,
+	mqManager *mqRepo.MessageQueueManager,
 ) *fiber.App {
 
 	app := fiber.New(fiber.Config{
@@ -95,7 +101,7 @@ func SetupRouter(
 
 	rawVideoGrp := api.Group("/raw-videos")
 	{
-		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager))
+		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager, mqManager))
 		rawVideoGrp.Get("", handlers.GetRawVideoMetadatasHandler(db))
 		rawVideoGrp.Get("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
 	}

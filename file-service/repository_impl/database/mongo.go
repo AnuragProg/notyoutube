@@ -31,6 +31,19 @@ func NewMongoDatabase(uri, dbName, rawVideoCol string) (*MongoDatabase, error) {
 	}, nil
 }
 
+func MustNewMongoDatabase(uri, dbName, rawVideoCol string) *MongoDatabase {
+	client, err := mongo.Connect(options.Client().ApplyURI(uri))
+	if err != nil {
+		panic(err)
+	}
+	db := client.Database(dbName)
+	return &MongoDatabase{
+		client:   client,
+		db:       db,
+		rawVideoCol: db.Collection(rawVideoCol),
+	}
+}
+
 func (md *MongoDatabase) Close() error {
 	return md.client.Disconnect(context.TODO())
 }

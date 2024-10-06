@@ -8,34 +8,37 @@ import (
 )
 
 type MongoRawVideoMetadata struct {
-	Id           bson.ObjectID `bson:"_id"`
-	Filename     string        `bson:"filename"`
-	ContentType  string        `bson:"content_type"`
-	FileSize     int64         `bson:"file_size"`
+	Id          bson.ObjectID `bson:"_id"`
+	Filename    string        `bson:"filename"`
+	ContentType string        `bson:"content_type"`
+	FileSize    int64         `bson:"file_size"`
+	RequestId   string        `json:"request_id"`
 	// FileLocation string        `bson:"-"` // object location // INFO: currently not implementing it as location is hardcoded in backend
-	CreatedAt    time.Time     `bson:"created_at"`
+	CreatedAt time.Time `bson:"created_at"`
 }
 
 func FromRawVideoMetadataToMongoRawVideoMetadataIgnoringId(metadata RawVideoMetadata) MongoRawVideoMetadata {
 	id := bson.NewObjectID()
 	return MongoRawVideoMetadata{
-		Id:           id,
-		Filename:     metadata.Filename,
-		ContentType:  metadata.ContentType,
-		FileSize:     metadata.FileSize,
+		Id:          id,
+		Filename:    metadata.Filename,
+		ContentType: metadata.ContentType,
+		FileSize:    metadata.FileSize,
+		RequestId:   metadata.RequestId,
 		// FileLocation: metadata.FileLocation,
-		CreatedAt:    metadata.CreatedAt,
+		CreatedAt: metadata.CreatedAt,
 	}
 }
 
 func (metadata *MongoRawVideoMetadata) ToRawVideoMetadata() RawVideoMetadata {
 	return RawVideoMetadata{
-		Id:           metadata.Id.Hex(),
-		Filename:     metadata.Filename,
-		ContentType:  metadata.ContentType,
-		FileSize:     metadata.FileSize,
+		Id:          metadata.Id.Hex(),
+		Filename:    metadata.Filename,
+		ContentType: metadata.ContentType,
+		FileSize:    metadata.FileSize,
+		RequestId:   metadata.RequestId,
 		// FileLocation: metadata.FileLocation,
-		CreatedAt:    metadata.CreatedAt,
+		CreatedAt: metadata.CreatedAt,
 	}
 }
 

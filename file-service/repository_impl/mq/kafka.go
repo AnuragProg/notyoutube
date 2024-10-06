@@ -39,7 +39,7 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 	}
 }
 
-type KafkaClient struct {
+type KafkaQueue struct {
 	brokers   []string
 	producer  sarama.SyncProducer
 
@@ -56,17 +56,26 @@ func getDefaultKafkaConfig() *sarama.Config {
 	return config
 }
 
-func NewKafkaClient(brokers []string) (*KafkaClient, error) {
+func NewKafkaQueue(brokers []string) (*KafkaQueue, error) {
 	producer, err := sarama.NewSyncProducer(brokers, getDefaultKafkaConfig())
 	if err != nil {
 		return nil, err
 	}
 
-	return &KafkaClient{brokers: brokers, producer: producer, consumers: new(sync.Map)}, nil
+	return &KafkaQueue{brokers: brokers, producer: producer, consumers: new(sync.Map)}, nil
+}
+
+func MustNewKafkaQueue(brokers []string) *KafkaQueue {
+	producer, err := sarama.NewSyncProducer(brokers, getDefaultKafkaConfig())
+	if err != nil {
+		panic(err)
+	}
+
+	return &KafkaQueue{brokers: brokers, producer: producer, consumers: new(sync.Map)}
 }
 
 // sends the message over the given topic, key for partitioning
-func (kc *KafkaClient) SendMessage(topic, key string, message []byte) error {
+func (kc *KafkaQueue) Publish(topic, key string, message []byte) error {
 	_, _, err := kc.producer.SendMessage(&sarama.ProducerMessage{
 		Topic: topic,
 		Key:   sarama.StringEncoder(key),
@@ -76,7 +85,7 @@ func (kc *KafkaClient) SendMessage(topic, key string, message []byte) error {
 }
 
 // creates a new consumer group and listens to the topic, returned error chan is for immediate & non immediate error reporting
-func (kc *KafkaClient) ListenMessages(ctx context.Context, topics []string, groupID string, messageHandler func([]byte) error) <-chan error {
+func (kc *KafkaQueue) Subscribe(ctx context.Context, topics []string, groupID string, messageHandler func([]byte) error) <-chan error {
 	errChan := make(chan error)
 
 	// putting everything in a goroutine to ensure responsibility of closing err chan to the 
@@ -118,7 +127,7 @@ func (kc *KafkaClient) ListenMessages(ctx context.Context, topics []string, grou
 	return errChan
 }
 
-func (kc *KafkaClient) Close() error {
+func (kc *KafkaQueue) Close() error {
 	err := kc.producer.Close()
 	if err != nil {
 		return err
