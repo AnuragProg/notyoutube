@@ -38,16 +38,3 @@ func (mqm *MessageQueueManager) PublishToRawVideoTopic(message *mqTypes.RawVideo
 	fmt.Printf("encoded message = %v\n", string(encodedMessage))
 	return mqm.mq.Publish(MQ_TOPIC_RAW_VIDEO, uuid.New().String(), encodedMessage)
 }
-
-// TODO: Just for POC on how to have type safe way to communicate through message queue both through the queue and inside of the service
-// func (mqm *MessageQueueManager) SubscribeToRawVideoTopic(topics []string, messageHandler func(*mqTypes.RawVideoMetadata) error) <-chan error {
-// 	messageHandlerWrapper := func(message []byte) error {
-// 		var decodedMessage mqTypes.RawVideoMetadata
-// 		err := proto.Unmarshal(message, &decodedMessage)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		return messageHandler(&decodedMessage)
-// 	}
-// 	return mqm.mq.Subscribe(context.TODO(), topics, configs.SERVICE_NAME, messageHandlerWrapper)
-// }

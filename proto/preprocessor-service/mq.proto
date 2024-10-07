@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+
+option go_package = "github.com/anuragprog/notyoutube/preprocessor-service/types/mq";
+
+
+message RawVideoMetadata {
+    string id = 1;
+    string filename = 2;
+    string content_type = 3;
+    string request_id = 4;
+    int64 file_size = 5;
+    string created_at = 6;
+}

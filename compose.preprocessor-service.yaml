@@ -1,0 +1,34 @@
+include:
+  - compose.kafka.yaml
+
+services:
+
+  preprocessor-service:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: preprocessor-service.Dockerfile
+    ports:
+      - 3001:3001
+    environment:
+      ENVIRONMENT: production
+      USE_NOOP_DB: true
+      USE_NOOP_MQ: false
+      USE_NOOP_STORE: true
+      # currently only using as a worker
+      # STORE_BUCKET: not-youtube
+      # MINIO_URI: file-service-minio:9000
+      # MINIO_SERVER_ACCESS_KEY: minio-access-key
+      # MINIO_SERVER_SECRET_KEY: minio-secret-key
+      # MONGO_URI: mongodb://file-service-mongo:27017
+      # MONGO_DB_NAME: not_youtube
+      # MONGO_RAW_VIDEO_COL: raw_videos
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - default
+
+networks:
+  default: {}
+
