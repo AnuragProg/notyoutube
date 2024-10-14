@@ -5,19 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
-	"os"
 
 	"github.com/IBM/sarama"
+	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
+	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
 )
 
 
 func init(){
-	sarama.Logger = log.New(
-		os.Stdout, "Custom Logger:",
-		log.Ldate|log.Ltime|log.Lshortfile|log.Llongfile|log.LstdFlags,
-	)
+	if configs.ENVIRONMENT == utils.DEVELOPMENT_ENV {
+		sarama.Logger = log.New(
+			os.Stdout, "Custom Logger:",
+			log.Ldate|log.Ltime|log.Lshortfile|log.Llongfile|log.LstdFlags,
+		)
+	}
 }
 
 

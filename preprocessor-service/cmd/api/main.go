@@ -23,7 +23,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-
 func main() {
 	appLogger := loggerRepoImpl.NewZeroLogger(
 		loggerRepoImpl.NewBatchLogger(
@@ -66,7 +65,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
-		fmt.Printf("Got raw video metadata from wire = %+v\n", rvm)
 		return nil
 	})
 	go func(){

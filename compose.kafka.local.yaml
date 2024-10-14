@@ -1,0 +1,42 @@
+# Below is the observation that has been noted, because of which this compose file will be used purely for connecting local services to kafka
+# Connection using sarama is advised to be using broker address 0.0.0.0:9092
+#############################################################
+# in compose.kafka.yaml
+# With kafka-advertised-listener set to localhost:9092
+# Sarama Producer 
+#   - Outside of compose - works (with kafka-broker=[localhost:9092])
+#   - Inside of compose - works (with kafka-broker=[kafka:9092])
+# Sarama Consumer Group
+#   - Outside of compose - doesn't work (with kafka-broker=[localhost:9092])
+#   - Inside of compose - doesn't work (with kafka-broker=[kafka:9092])
+
+# With kafka-advertised-listener set to kafka:9092
+# Sarama Producer 
+#   - Outside of compose - haven't tested (with kafka-broker=[])
+#   - Inside of compose - works (with kafka-broker=[kafka:9092])
+# Sarama Consumer Group
+#   - Outside of compose - haven't tested (with kafka-broker=[])
+#   - Inside of compose - works (with kafka-broker=[kafka:9092])
+#############################################################
+
+services:
+  kafka:
+    image: apache/kafka:latest
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INSIDE:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    networks:
+      - default
