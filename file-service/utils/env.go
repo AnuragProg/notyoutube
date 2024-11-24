@@ -3,6 +3,7 @@ package utils
 import (
 	"os"
 	"strings"
+	"strconv"
 )
 
 type Environment string
@@ -57,4 +58,12 @@ func GetEnvBoolDefault(key string, def bool) bool {
 		return def
 	}
 	return boolValue
+}
+
+func GetEnvIntDefault(key string, def int) int {
+	value, err := strconv.Atoi(os.Getenv(key))
+	if err != nil {
+		return def
+	}
+	return value
 }

@@ -6,12 +6,11 @@ import (
 	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 )
 
-const (
-	API_PORT     = 3001
-	SERVICE_NAME = "preprocessor-service" 
-)
 
 var (
+	API_PORT     = utils.GetEnvIntDefault("API_PORT", 3001)
+	SERVICE_NAME = utils.GetEnvDefault("SERVICE_NAME", "preprocessor-service") 
+
 	ENVIRONMENT            = utils.GetEnvironment(utils.DEVELOPMENT_ENV)
 	DEFAULT_PAGE_START int = 0
 	DEFAULT_PAGE_SIZE  int = 25

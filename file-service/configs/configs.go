@@ -6,12 +6,11 @@ import (
 	"github.com/anuragprog/notyoutube/file-service/utils"
 )
 
-const (
-	API_PORT     = 3000
-	SERVICE_NAME = "file-service" 
-)
 
 var (
+	API_PORT     = utils.GetEnvIntDefault("API_PORT", 3000)
+	SERVICE_NAME = utils.GetEnvDefault("SERVICE_NAME", "file-service")
+
 	ENVIRONMENT            = utils.GetEnvironment(utils.DEVELOPMENT_ENV)
 	DEFAULT_PAGE_START int = 0
 	DEFAULT_PAGE_SIZE  int = 25

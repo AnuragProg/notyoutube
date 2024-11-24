@@ -3,9 +3,64 @@ package workers
 
 import(
 	mqType "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
+
+	utilsType "github.com/anuragprog/notyoutube/preprocessor-service/types/utils"
 )
 
+var target_video_resolutions = map[string]utilsType.VideoInfo{
+	"144p": {
+		Width: 256, Height: 144,
+		Bitrate: 150_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+	"240p": {
+		Width: 426, Height: 240,
+		Bitrate: 240_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+	"360p": {
+		Width: 640, Height: 360,
+		Bitrate: 800_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+	"480p": {
+		Width: 854, Height: 480,
+		Bitrate: 1_200_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+	"720p": {
+		Width: 1280, Height: 720,
+		Bitrate: 2_500_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+	"1080p": {
+		Width: 1920, Height: 1080,
+		Bitrate: 5_000_000,   
+		AspectRatio: float32(16)/float32(9),
+	},
+}
+
+var target_ansi_resolutions = []interface{}{}
+
+
+/*
+1. Separation of video and audio
+2. Video encoding to different resolutions + terminal versions as well
+3. Audio encoding
+4. 
+*/
 func DAGWorker(metadata *mqType.RawVideoMetadata) {
+
+	/*
+	Stage1:
+		- video extraction
+		- audio extraction
+		- metadata extraction
+	
+	Stage2:
+		- video encodings [144,240,360,480,720,1080,]
+		- audio encoding
+	*/
 
 }
 

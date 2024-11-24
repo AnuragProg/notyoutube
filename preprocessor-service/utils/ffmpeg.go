@@ -28,16 +28,19 @@ func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (
 	if err != nil {
 		return utilsType.VideoInfo{}, err
 	}
+	defer stdin.Close()
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return utilsType.VideoInfo{}, err
 	}
+	defer stdout.Close()
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return utilsType.VideoInfo{}, err
 	}
+	defer stderr.Close()
 
 	if err := cmd.Start(); err != nil {
 		return utilsType.VideoInfo{}, err
@@ -69,7 +72,6 @@ func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (
 			}
 		}
 	}()
-
 
 	doneChan := make(chan utilsType.VideoInfo)
 	defer close(doneChan)
