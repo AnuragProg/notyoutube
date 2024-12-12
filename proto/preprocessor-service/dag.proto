@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+enum WorkerType {
+    WORKER_VIDEO_ENCODER = 0;
+    WORKER_ASCII_ENCODER = 1;
+    WORKER_THUMBNAIL_EXTRACTOR = 2;
+    WORKER_ASSEMBLER = 3;
+    WORKER_VIDEO_EXTRACTOR = 4;
+    WORKER_AUDIO_EXTRACTOR = 5;
+    WORKER_METADATA_EXTRACTOR = 6;
+}
+
+message Worker {
+    uint32 id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message Dependency {
+    uint32 source_id = 1;
+    uint32 target_id = 2;
+}
+
+message DAG {
+    repeated Node nodes = 2;
+    repeated Edge edges = 3;
+}
