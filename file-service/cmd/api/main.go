@@ -17,7 +17,7 @@ import (
 	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
 	mqRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/mq"
 	storeRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/store"
-	"github.com/gofiber/fiber/v2"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -63,7 +63,7 @@ func main() {
 	doneChan := make(chan bool)
 
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
+		if err := app.Start(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
 			fmt.Println(err.Error())
 		}
 		doneChan <- true
@@ -79,12 +79,9 @@ func SetupRouter(
 	storeManager *storeRepo.StoreManager,
 	appLogger loggerRepo.Logger,
 	mqManager *mqRepo.MessageQueueManager,
-) *fiber.App {
+) *echo.Echo {
 
-	app := fiber.New(fiber.Config{
-		ServerHeader: "not-youtube",
-		BodyLimit:    50 << 20, // 50 mb
-	})
+	app := echo.New()
 
 	// setup middlewares
 	// 1. setting up x-request-id header
@@ -97,13 +94,13 @@ func SetupRouter(
 	// setup api
 	api := app.Group("/v1")
 
-	api.Get("/health", handlers.GetHealthHandler())
+	api.GET("/health", handlers.GetHealthHandler())
 
 	rawVideoGrp := api.Group("/raw-videos")
 	{
-		rawVideoGrp.Post("", handlers.PostRawVideoHandler(db, storeManager, mqManager))
-		rawVideoGrp.Get("", handlers.GetRawVideoMetadatasHandler(db))
-		rawVideoGrp.Get("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
+		rawVideoGrp.POST("", handlers.PostRawVideoHandler(db, storeManager, mqManager))
+		rawVideoGrp.GET("", handlers.GetRawVideoMetadatasHandler(db))
+		rawVideoGrp.GET("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
 	}
 
 	return app

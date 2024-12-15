@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/labstack/echo/v4"
 )
 
-func GetHealthHandler() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		return c.Status(http.StatusOK).JSON(fiber.Map{"message": "pong"})
+func GetHealthHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return c.JSON(http.StatusOK, echo.Map{"message": "pong"})
 	}
 }

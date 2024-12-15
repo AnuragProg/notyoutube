@@ -1,5 +1,5 @@
 
-BIN_NAME ?= "app"
+BIN_NAME ?= ./build/app
 
 .PHONY: build
 build:

@@ -37,11 +37,10 @@ func adjustBaseAPILogInZeroLogEvent(event *zerolog.Event, apiLog logger.BaseAPIL
 		Str("method", apiLog.Method).
 		Str("endpoint", apiLog.Endpoint).
 		Str("client_ip", apiLog.ClientIP).
-		Str("user_agent", apiLog.UserAgent).
 		Str("request_id", apiLog.RequestID).
+		Str("trace_id", apiLog.TraceID).
 		RawJSON("query_params", queryParamsJson).
 		RawJSON("request_headers", requestHeadersJson).
-		Str("request_body", apiLog.RequestBody).
 		RawJSON("miscellaneous", miscellaneousJson)
 }
 
