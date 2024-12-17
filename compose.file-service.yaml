@@ -13,7 +13,7 @@ services:
     environment:
       ENVIRONMENT: production
       USE_NOOP_DB: false
-      USE_NOOP_MQ: false
+      USE_NOOP_MQ: true
       USE_NOOP_STORE: false
       STORE_BUCKET: not-youtube
       MINIO_URI: file-service-minio:9000

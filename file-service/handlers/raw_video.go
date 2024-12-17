@@ -35,10 +35,6 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 			return errType.NewAPIError(http.StatusBadRequest, "no video files found")
 		}
 		if len(files) != 1 {
-			return errType.NewAPIError(http.StatusNotImplemented, "currently we accept only one file, and will in future have functionality to serve multiple files")
-		}
-
-		if len(files) != 1 {
 			return errType.NewAPIError(http.StatusBadRequest, "exactly 1 file required")
 		}
 		file := files[0]
@@ -48,6 +44,8 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 			Filename:    file.Filename,
 			ContentType: contentType,
 			FileSize:    file.Size,
+			RequestId:   c.Response().Header().Get("X-Request-Id"),
+			TraceId:     c.Response().Header().Get("X-Trace-Id"),
 			CreatedAt:   time.Now().UTC(),
 		}
 
@@ -81,16 +79,15 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 		}
 		fileReader.Close()
 
-
 		// push event to kafka queue
-		// TODO: add logging mechanism for kafka events 
-		go func(metadata databaseType.RawVideoMetadata){
+		// TODO: add logging mechanism for message queue events
+		go func(metadata databaseType.RawVideoMetadata) {
 			if err := mq.PublishToRawVideoTopic(mqType.FromRawVideoMetadataToProtoRawVideoMetadata(metadata)); err != nil {
 				fmt.Println(err.Error())
 			}
-		}(metadata)
+		}(generatedMetadata)
 
-		return c.JSON(http.StatusCreated, metadata)
+		return c.JSON(http.StatusCreated, generatedMetadata)
 	}
 }
 
@@ -119,7 +116,10 @@ func GetRawVideoMetadatasHandler(db databaseRepo.Database) echo.HandlerFunc {
 
 func GetRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		videoId := c.QueryParam("video_id")
+		videoId := c.Param("videoId")
+		if videoId == "" {
+			return errType.NewAPIError(http.StatusBadRequest, "missing video id")
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), configs.DEFAULT_TIMEOUT)
 		defer cancel()
 		metadata, err := db.GetRawVideoMetadata(ctx, videoId)

@@ -10,7 +10,6 @@ services:
     networks:
       - default
 
-
   minio:
     restart: on-failure:3
     image: bitnami/minio:2024.9.22    

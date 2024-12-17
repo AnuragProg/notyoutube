@@ -26,22 +26,7 @@ func NewMinioStore(minioURI, minioServerAccessKey, minioServerSecretKey string) 
 	if err != nil {
 		return nil, err
 	}
-
 	return &MinioStore{client: minioClient}, nil
-}
-
-func MustNewMinioStore(minioURI, minioServerAccessKey, minioServerSecretKey string) *MinioStore {
-	minioClient, err := minio.New(minioURI, &minio.Options{
-		Creds: credentials.NewStaticV4(minioServerAccessKey, minioServerSecretKey, ""),
-		Transport: &http.Transport{
-			MaxIdleConns:    100,
-			IdleConnTimeout: 60 * time.Second,
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-	return &MinioStore{client: minioClient}
 }
 
 func (ms *MinioStore) Upload(ctx context.Context, bucketName string, objectName string, reader io.Reader, objectSize int64, contentType string) error {

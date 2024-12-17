@@ -3,7 +3,6 @@ Store Manager has been created purely for deciding where to store a certain reso
 Except for deciding the location of the resource StoreManager has no other purpose and should not be coded that way
 */
 
-
 package store
 
 import (
@@ -11,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-
 )
 
 type Resource string
@@ -54,7 +52,6 @@ func (sm *StoreManager) Upload(ctx context.Context, resource Resource, objectNam
 	return sm.store.Upload(ctx, sm.bucket, objectPath, reader, objectSize, contentType)
 }
 
-
 func (sm *StoreManager) Download(ctx context.Context, resource Resource, objectName string) (io.ReadCloser, error) {
 	objectPath, err := sm.getObjectResourceLocation(resource, objectName)
 	if err != nil {
@@ -62,5 +59,3 @@ func (sm *StoreManager) Download(ctx context.Context, resource Resource, objectN
 	}
 	return sm.store.Download(ctx, sm.bucket, objectPath)
 }
-
-

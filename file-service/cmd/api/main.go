@@ -12,6 +12,7 @@ import (
 	loggerRepo "github.com/anuragprog/notyoutube/file-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/file-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
+	"github.com/anuragprog/notyoutube/file-service/utils"
 
 	databaseRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/database"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
@@ -36,7 +37,7 @@ func main() {
 	if configs.USE_NOOP_STORE {
 		store = storeRepoImpl.NewNoopStore()
 	}else {
-		store = storeRepoImpl.MustNewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
+		store = utils.Must(storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY))
 	}
 	defer store.Close()
 	var storeManager = storeRepo.NewStoreManager(configs.STORE_BUCKET, store)
@@ -46,7 +47,7 @@ func main() {
 	if configs.USE_NOOP_DB {
 		db = databaseRepoImpl.NewNoopDatabse()
 	}else {
-		db = databaseRepoImpl.MustNewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME, configs.MONGO_RAW_VIDEO_COL)
+		db = utils.Must(databaseRepoImpl.NewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME, configs.MONGO_RAW_VIDEO_COL))
 	}
 	defer db.Close()
 
@@ -55,7 +56,7 @@ func main() {
 	if configs.USE_NOOP_MQ {
 		mq = mqRepoImpl.NewNoopQueue()
 	}else {
-		mq = mqRepoImpl.MustNewKafkaQueue(configs.KAFKA_BROKERS)
+		mq = utils.Must(mqRepoImpl.NewKafkaQueue(configs.KAFKA_BROKERS))
 	}
 	var mqManager = mqRepo.NewMessageQueueManager(mq)
 
@@ -84,8 +85,9 @@ func SetupRouter(
 	app := echo.New()
 
 	// setup middlewares
-	// 1. setting up x-request-id header
+	// 1. setting up x-request-id and x-trace-id header
 	app.Use(middlewares.GetRequestIdMiddleware())
+	app.Use(middlewares.GetTraceIdMiddleware())
 	// 2. setting up logger (requires x-request-id, hence after 1st), also handles panics and reports as critical errors
 	app.Use(middlewares.GetLoggerMiddleware(appLogger))
 	// 3. setting error response handler (make sure it is called before logger middleware to handle custom api errors)
@@ -100,7 +102,7 @@ func SetupRouter(
 	{
 		rawVideoGrp.POST("", handlers.PostRawVideoHandler(db, storeManager, mqManager))
 		rawVideoGrp.GET("", handlers.GetRawVideoMetadatasHandler(db))
-		rawVideoGrp.GET("/:video_id", handlers.GetRawVideoHandler(db, storeManager))
+		rawVideoGrp.GET("/:videoId", handlers.GetRawVideoHandler(db, storeManager))
 	}
 
 	return app

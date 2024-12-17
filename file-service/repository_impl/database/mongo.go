@@ -31,19 +31,6 @@ func NewMongoDatabase(uri, dbName, rawVideoCol string) (*MongoDatabase, error) {
 	}, nil
 }
 
-func MustNewMongoDatabase(uri, dbName, rawVideoCol string) *MongoDatabase {
-	client, err := mongo.Connect(options.Client().ApplyURI(uri))
-	if err != nil {
-		panic(err)
-	}
-	db := client.Database(dbName)
-	return &MongoDatabase{
-		client:   client,
-		db:       db,
-		rawVideoCol: db.Collection(rawVideoCol),
-	}
-}
-
 func (md *MongoDatabase) Close() error {
 	return md.client.Disconnect(context.TODO())
 }
@@ -60,7 +47,7 @@ func (md *MongoDatabase) CreateRawVideoMetadata(ctx context.Context, metadata da
 func (md *MongoDatabase) GetRawVideoMetadata(ctx context.Context, id string) (*databaseType.RawVideoMetadata, error) {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
-		return nil, errType.InvalidQuery
+		return nil, errors.New("invalid video id")
 	}
 	filter := bson.M{"_id": objectId}
 
