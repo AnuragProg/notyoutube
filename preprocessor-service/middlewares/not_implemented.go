@@ -1,9 +1,11 @@
 package middlewares
 
-import "github.com/gofiber/fiber/v2"
+import "github.com/labstack/echo/v4"
 
-func GetNotImplementedMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		return fiber.ErrNotImplemented
+func GetNotImplementedMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			return echo.ErrNotImplemented
+		}
 	}
 }

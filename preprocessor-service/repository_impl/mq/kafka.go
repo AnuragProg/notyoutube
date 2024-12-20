@@ -86,15 +86,6 @@ func NewKafkaQueue(brokers []string) (*KafkaQueue, error) {
 	return &KafkaQueue{brokers: brokers, producer: producer, consumers: new(sync.Map)}, nil
 }
 
-func MustNewKafkaQueue(brokers []string) *KafkaQueue {
-	producer, err := sarama.NewSyncProducer(brokers, getDefaultKafkaConfig())
-	if err != nil {
-		panic(err)
-	}
-
-	return &KafkaQueue{brokers: brokers, producer: producer, consumers: new(sync.Map)}
-}
-
 // sends the message over the given topic, key for partitioning
 func (kc *KafkaQueue) Publish(topic, key string, message []byte) error {
 	_, _, err := kc.producer.SendMessage(&sarama.ProducerMessage{
@@ -131,7 +122,7 @@ func (kc *KafkaQueue) Subscribe(ctx context.Context, topics []string, groupID st
 		}
 
 		for {
-			if err := group.Consume(ctx, topics, &consumer); err != nil {
+			if err := group.Consume(ctx, topics, consumer); err != nil {
 				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 					return
 				}

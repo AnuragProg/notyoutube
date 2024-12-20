@@ -5,7 +5,7 @@ import (
 
 type NoopDatabase struct {}
 
-func NewNoopDatabse() *NoopDatabase {
+func NewNoopDatabase() *NoopDatabase {
 	return &NoopDatabase{}
 }
 

@@ -51,8 +51,12 @@ func getDefaultKafkaConfig() *sarama.Config {
 	config := sarama.NewConfig()
 	config.Metadata.Retry.Max = 3
 	config.Metadata.Retry.Backoff = time.Second * 2
+	config.Metadata.RefreshFrequency = 5 * time.Second
 	config.Producer.Return.Successes = true
 	config.Producer.Return.Errors = true
+	config.Consumer.Return.Errors = true
+	config.Consumer.Offsets.Initial = sarama.OffsetNewest
+	config.Consumer.Group.Rebalance.Timeout = 10 * time.Second
 	return config
 }
 

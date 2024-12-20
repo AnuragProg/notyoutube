@@ -13,6 +13,8 @@ import (
 	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/store"
+	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
+	"github.com/labstack/echo/v4"
 
 	databaseRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/logger"
@@ -20,7 +22,6 @@ import (
 	storeRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/store"
 
 	mqType "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
-	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -39,16 +40,15 @@ func main() {
 	if configs.USE_NOOP_STORE {
 		store = storeRepoImpl.NewNoopStore()
 	} else {
-		store = storeRepoImpl.MustNewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY)
+		store = utils.Must(storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY))
 	}
 	defer store.Close()
 	var storeManager = storeRepo.NewStoreManager(configs.STORE_BUCKET, store)
 
 	var db databaseRepo.Database
 	if configs.USE_NOOP_DB {
-		db = databaseRepoImpl.NewNoopDatabse()
+		db = databaseRepoImpl.NewNoopDatabase()
 	} else {
-		db = databaseRepoImpl.MustNewMongoDatabase(configs.MONGO_URI, configs.MONGO_DB_NAME)
 	}
 	defer db.Close()
 
@@ -56,10 +56,9 @@ func main() {
 	if configs.USE_NOOP_MQ {
 		mq = mqRepoImpl.NewNoopQueue()
 	} else {
-		mq = mqRepoImpl.MustNewKafkaQueue(configs.KAFKA_BROKERS)
+		mq = utils.Must(mqRepoImpl.NewKafkaQueue(configs.KAFKA_BROKERS))
 	}
 	var mqManager = mqRepo.NewMessageQueueManager(mq)
-
 
 	// setup worker listeners
 	ctx, cancel := context.WithCancel(context.Background())
@@ -67,18 +66,17 @@ func main() {
 	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
 		return nil
 	})
-	go func(){
+	go func() {
 		for err := range errChan {
 			panic(err)
 		}
 	}()
 
-
 	app := SetupRouter(db, storeManager, appLogger, mqManager)
 	doneChan := make(chan bool)
 
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
+		if err := app.Start(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
 			fmt.Println(err.Error())
 		}
 		doneChan <- true
@@ -95,16 +93,14 @@ func SetupRouter(
 	storeManager *storeRepo.StoreManager,
 	appLogger loggerRepo.Logger,
 	mqManager *mqRepo.MessageQueueManager,
-) *fiber.App {
+) *echo.Echo {
 
-	app := fiber.New(fiber.Config{
-		ServerHeader: "not-youtube",
-		BodyLimit:    50 << 20, // 50 mb
-	})
+	app := echo.New()
 
 	// setup middlewares
 	// 1. setting up x-request-id header
 	app.Use(middlewares.GetRequestIdMiddleware())
+	app.Use(middlewares.GetTraceIdMiddleware())
 	// 2. setting up logger (requires x-request-id, hence after 1st), also handles panics and reports as critical errors
 	app.Use(middlewares.GetLoggerMiddleware(appLogger))
 	// 3. setting error response handler (make sure it is called before logger middleware to handle custom api errors)
@@ -113,7 +109,7 @@ func SetupRouter(
 	// setup api
 	api := app.Group("/v1")
 
-	api.Get("/health", handlers.GetHealthHandler())
+	api.GET("/health", handlers.GetHealthHandler())
 
 	return app
 }
