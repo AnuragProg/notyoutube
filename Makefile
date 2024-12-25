@@ -1,36 +1,13 @@
-PROTO_SRC = ./proto
-
-FILE_SERVICE_IDENT = file-service
-PREPROCESSOR_SERVICE_IDENT = preprocessor-service
-
-FILE_SERVICE_PROTO_DIR = $(PROTO_SRC)/$(FILE_SERVICE_IDENT)
-FILE_SERVICE_PROTO_MQ_FILE = $(FILE_SERVICE_PROTO_DIR)/mq.proto
-FILE_SERVICE_PROTO_MQ_OUT_DIR = ./$(FILE_SERVICE_IDENT)/types/mq
-FILE_SERVICE_PROTO_MQ_OUT_FILE = $(FILE_SERVICE_PROTO_MQ_OUT_DIR)/mq.pb.go
-
-PREPROCESSOR_SERVICE_PROTO_DIR = $(PROTO_SRC)/$(PREPROCESSOR_SERVICE_IDENT)
-PREPROCESSOR_SERVICE_PROTO_MQ_PREPROCESSOR = $(PREPROCESSOR_SERVICE_PROTO_DIR)/mq.proto
-PREPROCESSOR_SERVICE_PROTO_MQ_OUT_DIR = ./$(PREPROCESSOR_SERVICE_IDENT)/types/mq
-PREPROCESSOR_SERVICE_PROTO_MQ_OUT_PREPROCESSOR = $(PREPROCESSOR_SERVICE_PROTO_MQ_OUT_DIR)/mq.pb.go
-
-all: $(FILE_SERVICE_PROTO_MQ_OUT_FILE) $(PREPROCESSOR_SERVICE_PROTO_MQ_OUT_PREPROCESSOR)
 
 
-# For generating mq proto stubs for file service
-$(FILE_SERVICE_PROTO_MQ_OUT_FILE): $(FILE_SERVICE_PROTO_MQ_FILE)
-	@echo "Building $@ because $< changed"
-	@mkdir -p $(FILE_SERVICE_PROTO_MQ_OUT_DIR) 
-	@protoc --proto_path=$(FILE_SERVICE_PROTO_DIR) \
-		--go_opt=paths=source_relative \
-		--go_out=$(FILE_SERVICE_PROTO_MQ_OUT_DIR) \
-		$(FILE_SERVICE_PROTO_MQ_FILE)
 
 
-# For generating mq proto stubs for preprocessor service
-$(PREPROCESSOR_SERVICE_PROTO_MQ_OUT_PREPROCESSOR): $(PREPROCESSOR_SERVICE_PROTO_MQ_PREPROCESSOR)
-	@echo "Building $@ because $< changed"
-	@mkdir -p $(PREPROCESSOR_SERVICE_PROTO_MQ_OUT_DIR) 
-	@protoc --proto_path=$(PREPROCESSOR_SERVICE_PROTO_DIR) \
-		--go_opt=paths=source_relative \
-		--go_out=$(PREPROCESSOR_SERVICE_PROTO_MQ_OUT_DIR) \
-		$(PREPROCESSOR_SERVICE_PROTO_MQ_PREPROCESSOR)
+.PHONY: proto-generate
+proto-generate:
+	./manage-proto.sh --generate --service file-service
+	./manage-proto.sh --generate --service preprocessor-service
+
+.PHONY: proto-clean
+proto-clean:
+	./manage-proto.sh --clean --service file-service
+	./manage-proto.sh --clean --service preprocessor-service
