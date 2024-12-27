@@ -82,7 +82,16 @@ func PostRawVideoHandler(db databaseRepo.Database, store *storeRepo.StoreManager
 		// push event to kafka queue
 		// TODO: add logging mechanism for message queue events
 		go func(metadata databaseType.RawVideoMetadata) {
-			if err := mq.PublishToRawVideoTopic(mqType.FromRawVideoMetadataToProtoRawVideoMetadata(metadata)); err != nil {
+			if err := mq.PublishToRawVideoTopic(&mqType.RawVideoMetadata{
+				Id: metadata.Id,
+				Filename: metadata.Filename,
+				ContentType: metadata.ContentType,
+				RequestId: metadata.RequestId,
+				TraceId: metadata.TraceId,
+				FileSize: metadata.FileSize,
+				CreatedAt: metadata.CreatedAt.Format(time.RFC3339),
+
+			}); err != nil {
 				fmt.Println(err.Error())
 			}
 		}(generatedMetadata)

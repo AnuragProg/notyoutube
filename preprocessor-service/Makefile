@@ -13,3 +13,8 @@ build:
 run:
 	@echo "Preprocessor Service Running..."
 	@$(BIN_NAME)
+
+.PHONY: help
+help:
+	@echo "build: Build preprocessor service"
+	@echo "run:   Run preprocessor service"

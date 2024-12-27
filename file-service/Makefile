@@ -14,3 +14,8 @@ build:
 run:
 	@echo "File Service Running..."
 	@$(BIN_NAME)
+
+.PHONY: help
+help:
+	@echo "build: Build file service"
+	@echo "run:   Run file service"
