@@ -3,7 +3,6 @@ package mq
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -40,7 +39,6 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 			if !ok {
 				return nil
 			}
-			fmt.Println("Received message on preprocessor side", string(message.Value))
 			if err := kcgh.messageHandler(message.Value); err != nil {
 				return err
 			}

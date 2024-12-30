@@ -12,14 +12,12 @@ import (
 	databaseRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
-	storeRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/store"
 	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 	"github.com/labstack/echo/v4"
 
 	databaseRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/logger"
 	mqRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/mq"
-	storeRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/store"
 
 	mqType "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
 )
@@ -35,15 +33,6 @@ func main() {
 		string(configs.ENVIRONMENT),
 	)
 	defer appLogger.Close()
-
-	var store storeRepo.Store
-	if configs.USE_NOOP_STORE {
-		store = storeRepoImpl.NewNoopStore()
-	} else {
-		store = utils.Must(storeRepoImpl.NewMinioStore(configs.MINIO_URI, configs.MINIO_SERVER_ACCESS_KEY, configs.MINIO_SERVER_SECRET_KEY))
-	}
-	defer store.Close()
-	var storeManager = storeRepo.NewStoreManager(configs.STORE_BUCKET, store)
 
 	var db databaseRepo.Database
 	if configs.USE_NOOP_DB {
@@ -72,7 +61,7 @@ func main() {
 		}
 	}()
 
-	app := SetupRouter(db, storeManager, appLogger, mqManager)
+	app := SetupRouter(db, appLogger, mqManager)
 	doneChan := make(chan bool)
 
 	go func() {
@@ -90,7 +79,6 @@ func main() {
 // TODO: Not yet decided which apis to give for preprocessor but need to find out
 func SetupRouter(
 	db databaseRepo.Database,
-	storeManager *storeRepo.StoreManager,
 	appLogger loggerRepo.Logger,
 	mqManager *mqRepo.MessageQueueManager,
 ) *echo.Echo {
