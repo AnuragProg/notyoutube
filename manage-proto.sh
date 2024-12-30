@@ -26,6 +26,8 @@ generate_proto(){
     protoc --proto_path=$proto_path \
         --go_opt=paths=source_relative \
         --go_out=$out_dir \
+        --go-grpc_opt=paths=source_relative \
+        --go-grpc_out=$out_dir \
         $proto_file
     echo "Generated: $proto_file!"
 }
