@@ -6,21 +6,29 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	utilsType "github.com/anuragprog/notyoutube/preprocessor-service/types/utils"
 )
 
-type FFmpegShell struct {}
-
-func NewFFmpegShell() FFmpegShell {
-	return FFmpegShell{}
-}
-
 // INFO: relative filenames were not producing any results, so try using full pathnames only
-func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (utilsType.VideoInfo, error) {
+//       Not converting to abs because test files take their locations as base
+func GetVideoResolution(ctx context.Context, filename string) (utilsType.VideoInfo, error) {
+
+	// check for absolute path existence
+	if !filepath.IsAbs(filename) {
+		return utilsType.VideoInfo{}, errors.New("only absolute filenames are allowed")
+	}
+
+	// check for file's existence
+	_, err := os.Stat(filename)
+	if err != nil && os.IsNotExist(err){
+		return utilsType.VideoInfo{}, errors.New("file not found")
+	}
 
 	cmd := exec.CommandContext(ctx, "/bin/sh")
 
@@ -45,7 +53,6 @@ func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (
 	if err := cmd.Start(); err != nil {
 		return utilsType.VideoInfo{}, err
 	}
-
 
 	errChan := make(chan error)
 	defer close(errChan)
@@ -83,29 +90,28 @@ func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (
 		videoResolution := utilsType.VideoInfo{}
 
 		// frame - expected o/p - (integer)
-		fmt.Println("getting total frames")
-		videoResolution.TotalFrames, err = f.processTotalFrames(stdin, stdoutReader, filename)
+		videoResolution.TotalFrames, err = processTotalFrames(stdin, stdoutReader, filename)
 		if err != nil {
 			errChan<- err
 			return
 		}
 
 		// aspect ratio - expected o/p - (integer):(integer)
-		videoResolution.AspectRatio, err = f.processAspectRatio(stdin, stdoutReader, filename)
+		videoResolution.AspectRatio, err = processAspectRatio(stdin, stdoutReader, filename)
 		if err != nil {
 			errChan<- err
 			return
 		}
 
 		// bitrate - expected o/p - (integer)
-		videoResolution.Bitrate, err = f.processBitrate(stdin, stdoutReader, filename)
+		videoResolution.Bitrate, err = processBitrate(stdin, stdoutReader, filename)
 		if err != nil {
 			errChan<- err
 			return
 		}
 
 		// resolution - expected o/p - (integer)x(integer)
-		videoResolution.Width, videoResolution.Height, err = f.processResolution(stdin, stdoutReader, filename)
+		videoResolution.Width, videoResolution.Height, err = processResolution(stdin, stdoutReader, filename)
 		if err != nil {
 			errChan<- err
 			return
@@ -126,7 +132,7 @@ func (f *FFmpegShell) GetVideoResolution(ctx context.Context, filename string) (
 }
 
 
-func (f *FFmpegShell) processTotalFrames(stdin io.Writer, stdout *bufio.Reader, filename string) (uint32, error) {
+func processTotalFrames(stdin io.Writer, stdout *bufio.Reader, filename string) (uint32, error) {
 	fmt.Println("executing ffprobe command")
 	frameCommand := fmt.Sprintf("ffprobe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 %v", filename)
 	if _, err := stdin.Write([]byte(frameCommand + "\n")); err != nil { return 0, err }
@@ -143,7 +149,7 @@ func (f *FFmpegShell) processTotalFrames(stdin io.Writer, stdout *bufio.Reader, 
 	return uint32(frames), nil
 }
 
-func (f *FFmpegShell) processAspectRatio(stdin io.Writer, stdout *bufio.Reader, filename string) (float32, error) {
+func processAspectRatio(stdin io.Writer, stdout *bufio.Reader, filename string) (float32, error) {
 	aspectRatioCommand := fmt.Sprintf("ffprobe -v error -select_streams v:0 -show_entries stream=display_aspect_ratio -of default=noprint_wrappers=1:nokey=1 %v", filename)
 	if _, err := stdin.Write([]byte(aspectRatioCommand + "\n")); err != nil { return 0, err }
 	aspectRatioOutput, _, err := stdout.ReadLine()
@@ -169,7 +175,7 @@ func (f *FFmpegShell) processAspectRatio(stdin io.Writer, stdout *bufio.Reader, 
 	return float32(numerator)/float32(denomenator), nil
 }
 
-func (f *FFmpegShell) processBitrate(stdin io.Writer, stdout *bufio.Reader, filename string) (uint32, error) {
+func processBitrate(stdin io.Writer, stdout *bufio.Reader, filename string) (uint32, error) {
 	bitrateCommand := fmt.Sprintf("ffprobe -v error -select_streams v:0 -show_entries stream=bit_rate -of default=noprint_wrappers=1:nokey=1 %v", filename)
 	if _, err := stdin.Write([]byte(bitrateCommand + "\n")); err != nil { return 0, err }
 	bitrateOutput, _, err := stdout.ReadLine()
@@ -184,7 +190,7 @@ func (f *FFmpegShell) processBitrate(stdin io.Writer, stdout *bufio.Reader, file
 	return uint32(bitrate), nil
 }
 
-func (f *FFmpegShell) processResolution(stdin io.Writer, stdout *bufio.Reader, filename string)(width, height uint32, err error) {
+func processResolution(stdin io.Writer, stdout *bufio.Reader, filename string)(width, height uint32, err error) {
 
 	resolutionCommand := fmt.Sprintf("ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 %v", filename)
 	if _, err = stdin.Write([]byte(resolutionCommand + "\n")); err != nil { 

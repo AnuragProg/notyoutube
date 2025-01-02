@@ -21,8 +21,7 @@ func TestGetVideoResolution(t *testing.T) {
 
 	defer goleak.VerifyNone(t)
 
-	ffmpegShell := NewFFmpegShell()
-	resolution, err := ffmpegShell.GetVideoResolution(context.TODO(), videoFilename)
+	resolution, err := GetVideoResolution(context.TODO(), videoFilename)
 	assert.Nil(t, err, "error happened while getting resolution: %v", err)
 	t.Logf("Resolution = %+v", resolution)
 }

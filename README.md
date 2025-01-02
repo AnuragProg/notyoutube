@@ -1,20 +1,5 @@
 
-## Schema
+## Ffmpeg commands
 
-- preprocessor -> dag scheduler -> task scheduler -> [workers]*
+- 60fps frames generation with 1280x720 dimension: ffmpeg -i input_video.mp4 -map 0:v -vf "fps=60,scale=1280:720" -qscale:v 2 frame_%04d.jpg
 
-- rendering specs:
-    144p 240p 360p 480p 720p 1080p
-    ansi-208x57-good enough
-
-- actual dag processing pipeline:
-
-                 metadata -> save to db
-
-    raw-video -> video -> [video encodings and thumbnail generation]*
-                                                                        -> merge video and audio -> final video [video + ansi(encoded) video]
-                 audio -> [audio encoding]*
-
-- schema
-
-    

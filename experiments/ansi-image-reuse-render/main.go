@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"os"
 	"time"
-	// "golang.org/x/term"
+	"golang.org/x/term"
 )
 
 
 func main(){
+
+	width, height, _ := term.GetSize(int(os.Stdout.Fd()))
+	fmt.Printf("Terminal size widthxheight = %vx%v\n", width, height)
+
 	frameChan := make(chan Frame)
 	defer close(frameChan)
 
