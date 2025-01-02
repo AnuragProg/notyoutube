@@ -3,23 +3,56 @@ syntax = "proto3";
 option go_package = "github.com/anuragprog/notyoutube/preprocessor-service/types/mq";
 
 enum WorkerType {
-    WORKER_VIDEO_ENCODER = 0;
-    WORKER_ASCII_ENCODER = 1;
-    WORKER_THUMBNAIL_EXTRACTOR = 2;
-    WORKER_ASSEMBLER = 3;
-    WORKER_VIDEO_EXTRACTOR = 4;
-    WORKER_AUDIO_EXTRACTOR = 5;
-    WORKER_METADATA_EXTRACTOR = 6;
+    VIDEO_ENCODER = 0;
+    ASCII_ENCODER = 1;
+    THUMBNAIL_GENERATOR = 2;
+    ASSEMBLER = 3;
+    VIDEO_EXTRACTOR = 4;
+    AUDIO_EXTRACTOR = 5;
+    METADATA_EXTRACTOR = 6;
+}
+
+enum VideoEncoding {
+    P144 = 0;
+    P240 = 1;
+    P360 = 2;
+    P480 = 3;
+    P720 = 4;
+    P1080= 5;
+}
+
+message VideoEncoderWorkerConfig {
+    VideoEncoding encoding = 1;
+    uint32 width = 2;
+    uint32 height = 3;
+    uint32 bitrate = 4;
+}
+
+enum AsciiEncoding {
+    P208x57 = 0;
+}
+
+message AsciiEncoderWorkerConfig {
+    AsciiEncoding encoding = 1;
+    uint32 width = 2;
+    uint32 height = 3;
+    uint32 fps = 4;
 }
 
 message Worker {
     uint32 id = 1;
     string name = 2;
     string description = 3;
+    WorkerType worker_type = 4;
+    oneof worker_config {
+        VideoEncoderWorkerConfig video_encoder_config = 5;
+        AsciiEncoderWorkerConfig ascii_encoder_config = 6;
+    }
 }
 
 message Dependency {
-    uint32 source_id = 1;
+    // made it repeated as one node can depend on multiple nodes
+    repeated uint32 source_ids = 1;
     uint32 target_id = 2;
 }
 
