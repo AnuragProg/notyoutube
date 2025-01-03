@@ -54,7 +54,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
-		return workers.DAGWorker(rvm)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 15)
+		defer cancel()
+		return workers.DAGWorker(ctx, mqManager, db, rvm)
 	})
 	go func() {
 		for err := range errChan {
