@@ -9,6 +9,7 @@ import (
 	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
 	"github.com/anuragprog/notyoutube/preprocessor-service/handlers"
 	"github.com/anuragprog/notyoutube/preprocessor-service/middlewares"
+	"github.com/anuragprog/notyoutube/preprocessor-service/workers"
 	databaseRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
@@ -53,7 +54,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
-		return nil
+		return workers.DAGWorker(rvm)
 	})
 	go func() {
 		for err := range errChan {
