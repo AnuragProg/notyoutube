@@ -15,14 +15,18 @@ services:
       USE_NOOP_DB: false
       USE_NOOP_MQ: false
       USE_NOOP_STORE: false
+
       STORE_BUCKET: not-youtube
       MINIO_URI: file-service-minio:9000
       MINIO_SERVER_ACCESS_KEY: minio-access-key
       MINIO_SERVER_SECRET_KEY: minio-secret-key
+
       MONGO_URI: mongodb://file-service-mongo:27017
       MONGO_DB_NAME: not_youtube
       MONGO_RAW_VIDEO_COL: raw_videos
+
       KAFKA_BROKERS: kafka:9092
+      MQ_TOPIC_RAW_VIDEO: raw-video
     depends_on:
       - kafka
       - file-service-mongo

@@ -12,13 +12,8 @@ import (
 
 	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
 	mqTypes "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
-)
-
-type MessageQueueTopic string
-
-const (
-	MQ_TOPIC_RAW_VIDEO = "raw-video"
 )
 
 type MessageQueueManager struct {
@@ -31,7 +26,7 @@ func NewMessageQueueManager(mq MessageQueue) *MessageQueueManager {
 	}
 }
 
-func (mqm *MessageQueueManager) SubscribeToRawVideoTopic(context context.Context, messageHandler func(*mqTypes.RawVideoMetadata) error) <-chan error {
+func (mqm *MessageQueueManager) SubscribeToRawVideoTopic(ctx context.Context, messageHandler func(*mqTypes.RawVideoMetadata) error) <-chan error {
 	messageHandlerWrapper := func(message []byte) error {
 		var decodedMessage mqTypes.RawVideoMetadata
 		err := proto.Unmarshal(message, &decodedMessage)
@@ -40,5 +35,13 @@ func (mqm *MessageQueueManager) SubscribeToRawVideoTopic(context context.Context
 		}
 		return messageHandler(&decodedMessage)
 	}
-	return mqm.mq.Subscribe(context, []string{MQ_TOPIC_RAW_VIDEO}, configs.SERVICE_NAME, messageHandlerWrapper)
+	return mqm.mq.Subscribe(ctx, []string{configs.MQ_TOPIC_RAW_VIDEO}, configs.SERVICE_NAME, messageHandlerWrapper)
+}
+
+func (mqm *MessageQueueManager) PublishToDAGTopic(message *mqTypes.DAG) error {
+	encodedMessage, err := proto.Marshal(message)
+	if err != nil {
+		return err
+	}
+	return mqm.mq.Publish(configs.MQ_TOPIC_DAG, uuid.New().String(), encodedMessage)
 }

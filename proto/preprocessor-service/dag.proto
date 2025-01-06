@@ -40,7 +40,7 @@ message AsciiEncoderWorkerConfig {
 }
 
 message Worker {
-    uint32 id = 1;
+    string id = 1;
     string name = 2;
     string description = 3;
     WorkerType worker_type = 4;
@@ -52,12 +52,13 @@ message Worker {
 
 message Dependency {
     // made it repeated as one node can depend on multiple nodes
-    repeated uint32 source_ids = 1;
-    uint32 target_id = 2;
+    repeated string source_ids = 1;
+    string target_id = 2;
 }
 
 message DAG {
     string id = 1;
-    repeated Worker workers = 2;
-    repeated Dependency dependencies = 3;
+    string created_at = 2;
+    repeated Worker workers = 3;
+    repeated Dependency dependencies = 4;
 }

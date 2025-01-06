@@ -9,6 +9,7 @@ import (
 	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
 	"github.com/anuragprog/notyoutube/preprocessor-service/handlers"
 	"github.com/anuragprog/notyoutube/preprocessor-service/middlewares"
+	"github.com/anuragprog/notyoutube/preprocessor-service/workers"
 	databaseRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
@@ -38,6 +39,7 @@ func main() {
 	if configs.USE_NOOP_DB {
 		db = databaseRepoImpl.NewNoopDatabase()
 	} else {
+		db = databaseRepoImpl.NewPostgresDatabase()
 	}
 	defer db.Close()
 
@@ -53,7 +55,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
-		return nil
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 15)
+		defer cancel()
+		return workers.DAGWorker(ctx, mqManager, db, rvm)
 	})
 	go func() {
 		for err := range errChan {

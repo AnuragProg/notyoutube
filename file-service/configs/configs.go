@@ -32,4 +32,5 @@ var (
 	MONGO_RAW_VIDEO_COL = utils.GetEnvDefault("MONGO_RAW_VIDEO_COL", "raw_videos")
 
 	KAFKA_BROKERS = utils.GetEnvListDefault("KAFKA_BROKERS", ",")
+	MQ_TOPIC_RAW_VIDEO = utils.GetEnvDefault("MQ_TOPIC_RAW_VIDEO ", "raw-video")
 )

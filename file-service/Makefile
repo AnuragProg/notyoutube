@@ -1,9 +1,10 @@
 
 BIN_NAME ?= ./build/app
 
-.PHONY: all
-all: build run
-
+.PHONY: help
+help:
+	@echo "build: Build file service"
+	@echo "run: Run file service"
 
 .PHONY: build
 build:
@@ -15,7 +16,3 @@ run:
 	@echo "File Service Running..."
 	@$(BIN_NAME)
 
-.PHONY: help
-help:
-	@echo "build: Build file service"
-	@echo "run:   Run file service"

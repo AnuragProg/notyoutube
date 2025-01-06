@@ -21,4 +21,6 @@ var (
 	USE_NOOP_MQ = utils.GetEnvBoolDefault("USE_NOOP_MQ", false)
 
 	KAFKA_BROKERS = utils.GetEnvListDefault("KAFKA_BROKERS", ",")
+	MQ_TOPIC_RAW_VIDEO = utils.GetEnvDefault("MQ_TOPIC_RAW_VIDEO ", "raw-video")
+	MQ_TOPIC_DAG = utils.GetEnvDefault("MQ_TOPIC_DAG", "dag")
 )

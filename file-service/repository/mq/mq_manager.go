@@ -8,16 +8,10 @@ Will be using service name as the group id so as to make it part of the horizont
 package mq
 
 import (
-	"fmt"
+	"github.com/anuragprog/notyoutube/file-service/configs"
+	mqTypes "github.com/anuragprog/notyoutube/file-service/types/mq"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/proto"
-	mqTypes "github.com/anuragprog/notyoutube/file-service/types/mq"
-)
-
-type MessageQueueTopic string
-
-const (
-	MQ_TOPIC_RAW_VIDEO = "raw-video"
 )
 
 type MessageQueueManager struct {
@@ -35,6 +29,5 @@ func (mqm *MessageQueueManager) PublishToRawVideoTopic(message *mqTypes.RawVideo
 	if err != nil {
 		return err
 	}
-	fmt.Printf("encoded message = %v\n", string(encodedMessage))
-	return mqm.mq.Publish(MQ_TOPIC_RAW_VIDEO, uuid.New().String(), encodedMessage)
+	return mqm.mq.Publish(configs.MQ_TOPIC_RAW_VIDEO, uuid.New().String(), encodedMessage)
 }
