@@ -15,7 +15,7 @@ import (
 
 func DAGWorker(ctx context.Context, mq *mqRepo.MessageQueueManager, database dbRepo.Database, metadata *mqType.RawVideoMetadata) error {
 	// TODO: Download file and store it locally somewhere
-	var filename string
+	var filename string = "input.mp4"
 	//////////////////////////////////
 
 	dag, err := utils.CreateDAG(ctx, filename)

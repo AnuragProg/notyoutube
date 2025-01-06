@@ -39,6 +39,7 @@ func main() {
 	if configs.USE_NOOP_DB {
 		db = databaseRepoImpl.NewNoopDatabase()
 	} else {
+		db = databaseRepoImpl.NewPostgresDatabase()
 	}
 	defer db.Close()
 

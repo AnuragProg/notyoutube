@@ -175,18 +175,18 @@ func (b *CreateDependencyTargetsBatchResults) Close() error {
 	return b.br.Close()
 }
 
-const createWorker = `-- name: CreateWorker :batchexec
+const createWorkers = `-- name: CreateWorkers :batchexec
 INSERT INTO workers(id, dag_id, name, description, worker_type, worker_config)
 VALUES ($1, $2, $3, $4, $5, $6)
 `
 
-type CreateWorkerBatchResults struct {
+type CreateWorkersBatchResults struct {
 	br     pgx.BatchResults
 	tot    int
 	closed bool
 }
 
-type CreateWorkerParams struct {
+type CreateWorkersParams struct {
 	ID           pgtype.UUID `json:"id"`
 	DagID        pgtype.UUID `json:"dag_id"`
 	Name         string      `json:"name"`
@@ -195,7 +195,7 @@ type CreateWorkerParams struct {
 	WorkerConfig []byte      `json:"worker_config"`
 }
 
-func (q *Queries) CreateWorker(ctx context.Context, arg []CreateWorkerParams) *CreateWorkerBatchResults {
+func (q *Queries) CreateWorkers(ctx context.Context, arg []CreateWorkersParams) *CreateWorkersBatchResults {
 	batch := &pgx.Batch{}
 	for _, a := range arg {
 		vals := []interface{}{
@@ -206,13 +206,13 @@ func (q *Queries) CreateWorker(ctx context.Context, arg []CreateWorkerParams) *C
 			a.WorkerType,
 			a.WorkerConfig,
 		}
-		batch.Queue(createWorker, vals...)
+		batch.Queue(createWorkers, vals...)
 	}
 	br := q.db.SendBatch(ctx, batch)
-	return &CreateWorkerBatchResults{br, len(arg), false}
+	return &CreateWorkersBatchResults{br, len(arg), false}
 }
 
-func (b *CreateWorkerBatchResults) Exec(f func(int, error)) {
+func (b *CreateWorkersBatchResults) Exec(f func(int, error)) {
 	defer b.br.Close()
 	for t := 0; t < b.tot; t++ {
 		if b.closed {
@@ -228,7 +228,7 @@ func (b *CreateWorkerBatchResults) Exec(f func(int, error)) {
 	}
 }
 
-func (b *CreateWorkerBatchResults) Close() error {
+func (b *CreateWorkersBatchResults) Close() error {
 	b.closed = true
 	return b.br.Close()
 }

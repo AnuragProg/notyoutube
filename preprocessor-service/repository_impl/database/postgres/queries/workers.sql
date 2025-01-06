@@ -1,5 +1,5 @@
 
--- name: CreateWorker :batchexec
+-- name: CreateWorkers :batchexec
 INSERT INTO workers(id, dag_id, name, description, worker_type, worker_config)
 VALUES ($1, $2, $3, $4, $5, $6);
 

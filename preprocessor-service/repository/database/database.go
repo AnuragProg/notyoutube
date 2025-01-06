@@ -24,7 +24,7 @@ type Database interface {
 	CreateDependencyTargets(ctx context.Context, targets []database.DependencyTarget) error
 	ListDependenciesOfDAG(ctx context.Context, dagId uuid.UUID) ([]database.Dependency, error)
 	ListDependencySourcesOfDAG(ctx context.Context, dagId uuid.UUID) ([]database.DependencySource, error)
-	ListDependencyTargetsOfDAG(ctx context.Context, dagId uuid.UUID) ([]database.DependencySource, error)
+	ListDependencyTargetsOfDAG(ctx context.Context, dagId uuid.UUID) ([]database.DependencyTarget, error)
 
 	WithTransaction(ctx context.Context, fn func(repo Database) error) error
 }
