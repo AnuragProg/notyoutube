@@ -4,10 +4,13 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+
+	storeTypes "github.com/anuragprog/notyoutube/file-service/types/store"
 )
 
 type MinioStore struct {
@@ -68,6 +71,16 @@ func (ms *MinioStore) ObjectExists(ctx context.Context, bucketName string, objec
 	return true, nil
 }
 
+func (ms *MinioStore) GetPresignedUrl(ctx context.Context, bucketName string, objectName string) (storeTypes.PresignUrlResult, error) { 
+	url, err := ms.client.PresignedGetObject(ctx, bucketName, objectName, time.Hour*24, make(url.Values))
+	if err != nil {
+		return storeTypes.PresignUrlResult{}, err
+	}
+	return storeTypes.PresignUrlResult{
+		Url: url.String(),
+		Method: "GET",
+	}, nil
+}
 
 func (ms *MinioStore) Close() error {
 	return nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -13,11 +14,13 @@ import (
 	mqRepo "github.com/anuragprog/notyoutube/file-service/repository/mq"
 	storeRepo "github.com/anuragprog/notyoutube/file-service/repository/store"
 	"github.com/anuragprog/notyoutube/file-service/utils"
+	"google.golang.org/grpc"
 
 	databaseRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/database"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/logger"
 	mqRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/mq"
 	storeRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/store"
+	rawVideoServiceRepoImpl "github.com/anuragprog/notyoutube/file-service/repository_impl/raw_video_service"
 	"github.com/labstack/echo/v4"
 )
 
@@ -60,19 +63,44 @@ func main() {
 	}
 	var mqManager = mqRepo.NewMessageQueueManager(mq)
 
-	app := SetupRouter(db, storeManager, appLogger, mqManager)
 	doneChan := make(chan bool)
 
+	go func(){
+		fmt.Printf("GRPC Server listening on %v\n", configs.GRPC_PORT)
+		defer fmt.Println("GRPC Server stopped")
+		grpcListener, err := net.Listen("tcp", fmt.Sprintf(":%v", configs.GRPC_PORT)) 
+		if err != nil {
+			panic(err.Error())
+		}
+		grpcApp := grpc.NewServer()
+		if configs.USE_NOOP_RAW_VIDEO_SERVICE {
+			rawVideoServiceRepoImpl.RegisterRawVideoServiceServer(
+				grpcApp,
+				rawVideoServiceRepoImpl.NewNoopRawVideoService(),
+			)
+		}else {
+			rawVideoServiceRepoImpl.RegisterRawVideoServiceServer(
+				grpcApp,
+				rawVideoServiceRepoImpl.NewRawVideoService(storeManager),
+			)
+		}
+		if err := grpcApp.Serve(grpcListener); err != nil {
+			fmt.Println(err.Error())
+		}
+		doneChan<- true
+	}()
+
 	go func() {
+		fmt.Printf("API Server listening on %v\n", configs.API_PORT)
+		defer fmt.Println("API Server stopped")
+		app := SetupRouter(db, storeManager, appLogger, mqManager)
 		if err := app.Start(fmt.Sprintf(":%v", configs.API_PORT)); err != nil {
 			fmt.Println(err.Error())
 		}
-		doneChan <- true
+		doneChan<- true
 	}()
 
-	fmt.Printf("Server listening on %v\n", configs.API_PORT)
 	<-doneChan
-	fmt.Println("Server stopped")
 }
 
 func SetupRouter(

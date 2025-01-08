@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	storeTypes "github.com/anuragprog/notyoutube/file-service/types/store"
 )
 
 type Resource string
@@ -58,4 +60,12 @@ func (sm *StoreManager) Download(ctx context.Context, resource Resource, objectN
 		return nil, err
 	}
 	return sm.store.Download(ctx, sm.bucket, objectPath)
+}
+
+func (sm *StoreManager) GetPresignedUrl(ctx context.Context, resource Resource, objectName string) (storeTypes.PresignUrlResult, error) {
+	objectPath, err := sm.getObjectResourceLocation(resource, objectName)
+	if err != nil {
+		return storeTypes.PresignUrlResult{}, err
+	}
+	return sm.store.GetPresignedUrl(ctx, sm.bucket, objectPath)
 }
