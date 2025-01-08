@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"io"
+
+	storeTypes "github.com/anuragprog/notyoutube/file-service/types/store"
 )
 
 // INFO: Not to be used directly for performing operations on store instead use StoreManager for doing the same
@@ -25,4 +27,7 @@ type Store interface {
 
 	// Checks if an object exists.
 	ObjectExists(ctx context.Context, bucketName string, objectName string) (bool, error)
+
+	// Get presigned url
+	GetPresignedUrl(ctx context.Context, bucketName string, objectName string) (storeTypes.PresignUrlResult, error)
 }

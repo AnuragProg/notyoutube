@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"strings"
+
+	storeTypes "github.com/anuragprog/notyoutube/file-service/types/store"
 )
 
 type NoopStore struct {}
@@ -19,5 +21,7 @@ func (*NoopStore) Delete(context.Context, string, string) error { return nil }
 func (*NoopStore) ListObjects(context.Context, string, string) ([]string, error) { return []string{}, nil }
 
 func (*NoopStore) ObjectExists(ctx context.Context, bucketName string, objectName string) (bool, error) { return false, nil }
+
+func (*NoopStore) GetPresignedUrl(ctx context.Context, bucketName string, objectName string) (storeTypes.PresignUrlResult, error) { return storeTypes.PresignUrlResult{}, nil }
 
 func (*NoopStore) Close() error { return nil }

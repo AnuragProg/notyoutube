@@ -9,7 +9,8 @@ require (
 	github.com/minio/minio-go/v7 v7.0.76
 	github.com/rs/zerolog v1.33.0
 	go.mongodb.org/mongo-driver/v2 v2.0.0-beta2
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/grpc v1.69.2
+	google.golang.org/protobuf v1.35.1
 )
 
 require (
@@ -50,4 +51,5 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
 )
