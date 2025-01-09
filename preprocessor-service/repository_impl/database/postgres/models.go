@@ -60,6 +60,7 @@ func (ns NullWorkerType) Value() (driver.Value, error) {
 
 type Dag struct {
 	ID        pgtype.UUID      `json:"id"`
+	TraceID   pgtype.UUID      `json:"trace_id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 

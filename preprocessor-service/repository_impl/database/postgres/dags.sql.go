@@ -12,25 +12,31 @@ import (
 )
 
 const createDAG = `-- name: CreateDAG :one
-INSERT INTO dags (id)
-VALUES ($1)
-RETURNING id, created_at
+INSERT INTO dags (id, trace_id, created_at)
+VALUES ($1, $2, $3)
+RETURNING id, trace_id, created_at
 `
 
-func (q *Queries) CreateDAG(ctx context.Context, id pgtype.UUID) (Dag, error) {
-	row := q.db.QueryRow(ctx, createDAG, id)
+type CreateDAGParams struct {
+	ID        pgtype.UUID      `json:"id"`
+	TraceID   pgtype.UUID      `json:"trace_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) CreateDAG(ctx context.Context, arg CreateDAGParams) (Dag, error) {
+	row := q.db.QueryRow(ctx, createDAG, arg.ID, arg.TraceID, arg.CreatedAt)
 	var i Dag
-	err := row.Scan(&i.ID, &i.CreatedAt)
+	err := row.Scan(&i.ID, &i.TraceID, &i.CreatedAt)
 	return i, err
 }
 
 const getDAG = `-- name: GetDAG :one
-SELECT id, created_at FROM dags WHERE id = $1
+SELECT id, trace_id, created_at FROM dags WHERE id = $1
 `
 
 func (q *Queries) GetDAG(ctx context.Context, id pgtype.UUID) (Dag, error) {
 	row := q.db.QueryRow(ctx, getDAG, id)
 	var i Dag
-	err := row.Scan(&i.ID, &i.CreatedAt)
+	err := row.Scan(&i.ID, &i.TraceID, &i.CreatedAt)
 	return i, err
 }

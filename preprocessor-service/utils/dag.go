@@ -65,6 +65,8 @@ var targetAsciiResolutions = []struct {
 	},
 }
 
+// Creates dag and returns' in message queue type DAG 
+// Returns message queue type so as to directly push it to message queue
 func CreateDAG(ctx context.Context, filename string) (*mqType.DAG, error) {
 
 	videoExtractorWorker := &mqType.Worker{

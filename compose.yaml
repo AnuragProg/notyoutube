@@ -2,8 +2,6 @@ include:
   - compose.file-service.yaml
   - compose.preprocessor-service.yaml
 
-#services:
-
 networks:
   default: {}
 
