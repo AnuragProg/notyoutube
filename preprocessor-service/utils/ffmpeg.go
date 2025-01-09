@@ -133,15 +133,15 @@ func GetVideoResolution(ctx context.Context, filename string) (utilsType.VideoIn
 
 
 func processTotalFrames(stdin io.Writer, stdout *bufio.Reader, filename string) (uint32, error) {
-	fmt.Println("executing ffprobe command")
+	// fmt.Println("executing ffprobe command")
 	frameCommand := fmt.Sprintf("ffprobe -v error -select_streams v:0 -count_frames -show_entries stream=nb_read_frames -of default=noprint_wrappers=1:nokey=1 %v", filename)
 	if _, err := stdin.Write([]byte(frameCommand + "\n")); err != nil { return 0, err }
-	fmt.Println("reading from stdout")
+	// fmt.Println("reading from stdout")
 	frameOutput, _, err := stdout.ReadLine()
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("frameoutput=",string(frameOutput))
+	// fmt.Println("frameoutput=",string(frameOutput))
 	frames, err := strconv.Atoi(string(frameOutput))
 	if err != nil {
 		return 0, err
@@ -156,7 +156,7 @@ func processAspectRatio(stdin io.Writer, stdout *bufio.Reader, filename string) 
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("aspectratiooutput=",string(aspectRatioOutput))
+	// fmt.Println("aspectratiooutput=",string(aspectRatioOutput))
 	parsedAspectRatio := strings.Split(string(aspectRatioOutput), ":")
 	if len(parsedAspectRatio) != 2 {
 		return 0, errors.New("coudn't parse aspect ratio")
@@ -182,7 +182,7 @@ func processBitrate(stdin io.Writer, stdout *bufio.Reader, filename string) (uin
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("bitrateoutput=", string(bitrateOutput))
+	// fmt.Println("bitrateoutput=", string(bitrateOutput))
 	bitrate, err := strconv.ParseUint(string(bitrateOutput), 10, 32)
 	if err != nil {
 		return 0, err
@@ -200,7 +200,7 @@ func processResolution(stdin io.Writer, stdout *bufio.Reader, filename string)(w
 	if err != nil {
 		return
 	}
-	fmt.Println("resolutionOutput=", string(resolutionOutput))
+	// fmt.Println("resolutionOutput=", string(resolutionOutput))
 	parsedResolution := strings.Split(string(resolutionOutput),"x")
 	if len(parsedResolution) != 2 {
 		err = errors.New("couldn't parse resolution")

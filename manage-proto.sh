@@ -4,16 +4,26 @@ readonly PROTO_ROOT_DIR="proto"
 readonly FILE_SERVICE_IDENT="file-service"
 readonly PREPROCESSOR_SERVICE_IDENT="preprocessor-service"
 
-# INFO: key=<proto file name>; value=<; separated, go_out and go-grpc_out>
-#                                       for now putting all the generated code in one place due to import errors
+# INFO: Associative maps for mapping proto files to their generated code directories.
+#       - Key: Proto file name (e.g., "raw_video_metadata.proto").
+#       - Value: Semicolon-separated paths for `go_out` and `go-grpc_out` directories.
+#       - Note: Currently, all generated code is placed in one directory to avoid import errors.
+
+# File service specific mappings.
+# Proto files in following services are translated to paths as follows:
+#   File-Service:
+#       - proto-file[key] (raw_video_metadata.proto) => proto/file-service/raw_video_metadata.proto
+#       - gen-dir[oneof value] (types/mq) => file-service/types/mq
+#   Same goes for every other service with dir changing as per service...
 declare -A file_service_proto_file_to_generated_dir=(
     ["raw_video_metadata.proto"]="types/mq;types/mq"
-    # ["raw_video_service.proto"]="types/raw_video_service;repository_impl/raw_video_service" # NOTE: for now putting all the generated code in one place due to import errors
-    ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service"
+    # ["raw_video_service.proto"]="types/raw_video_service;repository_impl/raw_video_service" # NOTE: refer to 1.
+    ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service" # NOTE: refer to 1.
 )
 declare -A preprocessor_service_proto_file_to_generated_dir=(
     ["raw_video_metadata.proto"]="types/mq;types/mq"
     ["dag.proto"]="types/mq;types/mq"
+    ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service"
 )
 
 readonly file_service_proto_to_generated

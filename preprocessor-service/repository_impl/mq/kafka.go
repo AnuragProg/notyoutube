@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
+	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 )
 
-
-func init(){
+func init() {
 	if configs.ENVIRONMENT == utils.DEVELOPMENT_ENV {
 		sarama.Logger = log.New(
 			os.Stdout, "Custom Logger:",
@@ -22,7 +21,6 @@ func init(){
 		)
 	}
 }
-
 
 type KafkaConsumerGroupHandler struct {
 	messageHandler func([]byte) error
@@ -39,6 +37,7 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 			if !ok {
 				return nil
 			}
+			// fmt.Printf("Got message from queue: %+v\n", message)
 			if err := kcgh.messageHandler(message.Value); err != nil {
 				return err
 			}
@@ -55,10 +54,10 @@ func (kcgh KafkaConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupS
 }
 
 type KafkaQueue struct {
-	brokers   []string
-	producer  sarama.SyncProducer
+	brokers  []string
+	producer sarama.SyncProducer
 
-	// Set of ConsumerGroup 
+	// Set of ConsumerGroup
 	consumers *sync.Map
 }
 
@@ -98,20 +97,20 @@ func (kc *KafkaQueue) Publish(topic, key string, message []byte) error {
 func (kc *KafkaQueue) Subscribe(ctx context.Context, topics []string, groupID string, messageHandler func([]byte) error) <-chan error {
 	errChan := make(chan error)
 
-	// putting everything in a goroutine to ensure responsibility of closing err chan to the 
+	// putting everything in a goroutine to ensure responsibility of closing err chan to the
 	// ListenMessages function only
 	go func() {
 		defer close(errChan)
 
 		group, err := sarama.NewConsumerGroup(kc.brokers, groupID, getDefaultKafkaConfig())
 		if err != nil {
-			errChan<- err
+			errChan <- err
 			return
 		}
 
 		kc.consumers.Store(group, struct{}{})
-		defer func(){
-			group.Close() // close the consumer group
+		defer func() {
+			group.Close()              // close the consumer group
 			kc.consumers.Delete(group) // delete the consumer group
 		}()
 
@@ -120,11 +119,11 @@ func (kc *KafkaQueue) Subscribe(ctx context.Context, topics []string, groupID st
 		}
 
 		for {
-			if err := group.Consume(ctx, topics, consumer); err != nil {
+			if err := group.Consume(ctx, topics, &consumer); err != nil {
 				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 					return
 				}
-				errChan<- err
+				errChan <- err
 				return
 			}
 			// cancelled using context

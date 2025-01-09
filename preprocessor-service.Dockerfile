@@ -1,4 +1,5 @@
 ARG GO_VERSION=1.23
+ARG ALPINE_VERSION=3.21
 
 ##################################################
 FROM golang:${GO_VERSION}-alpine AS builder
@@ -22,6 +23,10 @@ FROM builder AS server-build
 RUN make build BIN_NAME=app
 
 ##################################################
-FROM scratch
+FROM alpine:3.14
+
+# required for analyzing video files for dag creation
+RUN apk add --no-cache ffmpeg
+
 COPY --from=server-build /usr/app/app .
 ENTRYPOINT ["/app"]

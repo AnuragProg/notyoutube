@@ -24,15 +24,25 @@ services:
       - 3001:3001
     environment:
       ENVIRONMENT: production
-      USE_NOOP_DB: true
+      USE_NOOP_DB: false
       USE_NOOP_MQ: false
-      USE_NOOP_STORE: true
+
+      API_PORT: 3001
+
+      RAW_VIDEO_SERVICE_URL: file-service:50051
+
+      POSTGRES_HOST: preprocessor-service-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DBNAME: not_youtube
 
       KAFKA_BROKERS: kafka:9092
       MQ_TOPIC_RAW_VIDEO: raw-video
       MQ_TOPIC_DAG: dag
     depends_on:
       - kafka
+      - preprocessor-service-postgres
     networks:
       - default
 

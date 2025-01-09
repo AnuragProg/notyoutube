@@ -5,33 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/anuragprog/notyoutube/preprocessor-service/types"
+	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
+	dbType "github.com/anuragprog/notyoutube/preprocessor-service/types/database"
 	dbRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	"github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database/postgres"
-	dbType "github.com/anuragprog/notyoutube/preprocessor-service/types/database"
-	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-var WorkerTypeToPostgresWorkerType = map[dbType.WorkerType]postgres.WorkerType{
-	dbType.WorkerTypeVideoEncoder:       postgres.WorkerTypeVideoEncoder,
-	dbType.WorkerTypeAsciiEncoder:       postgres.WorkerTypeAsciiEncoder,
-	dbType.WorkerTypeThumbnailGenerator: postgres.WorkerTypeThumbnailGenerator,
-	dbType.WorkerTypeAssembler:          postgres.WorkerTypeAssembler,
-	dbType.WorkerTypeVideoExtractor:     postgres.WorkerTypeVideoExtractor,
-	dbType.WorkerTypeAudioExtractor:     postgres.WorkerTypeAudioExtractor,
-	dbType.WorkerTypeMetadataExtractor:  postgres.WorkerTypeMetadataExtractor,
-}
-var postgresWorkerTypeToWorkerType = map[postgres.WorkerType]dbType.WorkerType{
-	postgres.WorkerTypeVideoEncoder:       dbType.WorkerTypeVideoEncoder,
-	postgres.WorkerTypeAsciiEncoder:       dbType.WorkerTypeAsciiEncoder,
-	postgres.WorkerTypeThumbnailGenerator: dbType.WorkerTypeThumbnailGenerator,
-	postgres.WorkerTypeAssembler:          dbType.WorkerTypeAssembler,
-	postgres.WorkerTypeVideoExtractor:     dbType.WorkerTypeVideoExtractor,
-	postgres.WorkerTypeAudioExtractor:     dbType.WorkerTypeAudioExtractor,
-	postgres.WorkerTypeMetadataExtractor:  dbType.WorkerTypeMetadataExtractor,
-}
 
 type PostgresDatabase struct {
 	pool    *pgxpool.Pool
@@ -70,8 +52,14 @@ func (pd *PostgresDatabase) Close() error {
 }
 
 func (pd *PostgresDatabase) CreateDAG(ctx context.Context, dag dbType.Dag) error {
-	dagId := pgtype.UUID{Bytes: dag.ID, Valid: true}
-	_, err := pd.queries.CreateDAG(ctx, dagId)
+	_, err := pd.queries.CreateDAG(
+		ctx,
+		postgres.CreateDAGParams{
+			ID:        pgtype.UUID{Bytes: dag.ID, Valid: true},
+			TraceID:   pgtype.UUID{Bytes: dag.TraceId, Valid: true},
+			CreatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+		},
+	)
 	return err
 }
 
@@ -83,6 +71,7 @@ func (pd *PostgresDatabase) GetDAG(ctx context.Context, id uuid.UUID) (dbType.Da
 	}
 	return dbType.Dag{
 		ID:        dag.ID.Bytes,
+		TraceId:   dag.TraceID.Bytes,
 		CreatedAt: dag.CreatedAt.Time,
 	}, nil
 }
@@ -96,7 +85,7 @@ func (pd *PostgresDatabase) CreateWorkers(ctx context.Context, workers []dbType.
 				DagID:        pgtype.UUID{Bytes: w.DagID, Valid: true},
 				Name:         w.Name,
 				Description:  pgtype.Text{String: w.Description, Valid: true},
-				WorkerType:   WorkerTypeToPostgresWorkerType[w.WorkerType],
+				WorkerType:   types.WorkerTypeToPostgresWorkerType[w.WorkerType],
 				WorkerConfig: w.WorkerConfig,
 			}
 		}),
@@ -126,7 +115,7 @@ func (pd *PostgresDatabase) ListWorkersOfDAG(ctx context.Context, dagId uuid.UUI
 			DagID:        w.DagID.Bytes,
 			Name:         w.Name,
 			Description:  w.Description.String,
-			WorkerType:   postgresWorkerTypeToWorkerType[w.WorkerType],
+			WorkerType:   types.PostgresWorkerTypeToWorkerType[w.WorkerType],
 			WorkerConfig: w.WorkerConfig,
 		}
 	}), nil
@@ -179,6 +168,7 @@ func (pd *PostgresDatabase) CreateDependencySources(ctx context.Context, sources
 	result.Exec(func(i int, _err error) {
 		if _err != nil {
 			err = _err
+			fmt.Println(_err.Error())
 			result.Close()
 			return
 		}

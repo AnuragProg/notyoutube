@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TYPE worker_type AS ENUM (
     'video-encoder',
     'ascii-encoder',
@@ -7,8 +8,6 @@ CREATE TYPE worker_type AS ENUM (
     'audio-extractor',
     'metadata-extractor'
 );
-
-
 CREATE TABLE workers (
     id UUID NOT NULL,
     dag_id UUID NOT NULL REFERENCES dags(id),
@@ -18,3 +17,6 @@ CREATE TABLE workers (
     worker_config JSONB,
     PRIMARY KEY (id, dag_id)
 );
+
+-- +goose Down
+DROP TABLE workers;

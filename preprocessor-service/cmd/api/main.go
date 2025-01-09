@@ -9,18 +9,21 @@ import (
 	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
 	"github.com/anuragprog/notyoutube/preprocessor-service/handlers"
 	"github.com/anuragprog/notyoutube/preprocessor-service/middlewares"
-	"github.com/anuragprog/notyoutube/preprocessor-service/workers"
 	databaseRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
 	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
 	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
+	"github.com/anuragprog/notyoutube/preprocessor-service/workers"
 	"github.com/labstack/echo/v4"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	databaseRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database"
 	loggerRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/logger"
 	mqRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/mq"
 
 	mqType "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
+	rawVideoService "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/raw_video_service"
 )
 
 func main() {
@@ -39,7 +42,20 @@ func main() {
 	if configs.USE_NOOP_DB {
 		db = databaseRepoImpl.NewNoopDatabase()
 	} else {
-		db = databaseRepoImpl.NewPostgresDatabase()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+		_db, err := databaseRepoImpl.NewPostgresDatabase(
+			ctx,
+			configs.POSTGRES_HOST,
+			configs.POSTGRES_PORT,
+			configs.POSTGRES_USER,
+			configs.POSTGRES_PASSWORD,
+			configs.POSTGRES_DBNAME,
+		)
+		if err != nil {
+			panic(err)
+		}
+		db = _db
 	}
 	defer db.Close()
 
@@ -52,12 +68,19 @@ func main() {
 	var mqManager = mqRepo.NewMessageQueueManager(mq)
 
 	// setup worker listeners
-	ctx, cancel := context.WithCancel(context.Background())
+	rawVideoServiceConn, err := grpc.NewClient(configs.RAW_VIDEO_SERVICE_URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+	defer rawVideoServiceConn.Close()
+	rawVideoServiceClient := rawVideoService.NewRawVideoServiceClient(rawVideoServiceConn)
+	rawVideoTopicCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	errChan := mqManager.SubscribeToRawVideoTopic(ctx, func(rvm *mqType.RawVideoMetadata) error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second * 15)
+	errChan := mqManager.SubscribeToRawVideoTopic(rawVideoTopicCtx, func(rvm *mqType.RawVideoMetadata) error {
+		fmt.Println("Received message on raw video topic", rvm.String())
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
-		return workers.DAGWorker(ctx, mqManager, db, rvm)
+		return workers.DAGWorker(ctx, db, mqManager, rawVideoServiceClient, rvm)
 	})
 	go func() {
 		for err := range errChan {

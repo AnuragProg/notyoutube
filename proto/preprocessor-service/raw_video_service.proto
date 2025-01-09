@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/raw_video_service";
+
+
+message GetRawVideoDownloadPresignedUrlRequest {
+    string id = 1;
+}
+message GetRawVideoDownloadPresignedUrlResponse {
+    string presigned_url = 1;
+    string method = 2;
+}
+
+service RawVideoService {
+    rpc GetRawVideoDownloadPresignedUrl(GetRawVideoDownloadPresignedUrlRequest) returns (GetRawVideoDownloadPresignedUrlResponse) {}
+}
