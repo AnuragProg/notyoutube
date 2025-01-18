@@ -28,7 +28,7 @@ declare -A preprocessor_service_proto_file_to_generated_dir=(
 )
 declare -A dag_scheduler_service_proto_file_to_generated_dir=(
     ["dag.proto"]="types/mq;types/mq"
-    ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service"
+    ["dag_service.proto"]="repository_impl/dag_service;repository_impl/dag_service"
 )
 
 readonly file_service_proto_to_generated
