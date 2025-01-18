@@ -3,6 +3,7 @@
 readonly PROTO_ROOT_DIR="proto"
 readonly FILE_SERVICE_IDENT="file-service"
 readonly PREPROCESSOR_SERVICE_IDENT="preprocessor-service"
+readonly DAG_SCHEDULER_SERVICE_IDENT="dag-scheduler-service"
 
 # INFO: Associative maps for mapping proto files to their generated code directories.
 #       - Key: Proto file name (e.g., "raw_video_metadata.proto").
@@ -25,10 +26,14 @@ declare -A preprocessor_service_proto_file_to_generated_dir=(
     ["dag.proto"]="types/mq;types/mq"
     ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service"
 )
+declare -A dag_scheduler_service_proto_file_to_generated_dir=(
+    ["dag.proto"]="types/mq;types/mq"
+    ["raw_video_service.proto"]="repository_impl/raw_video_service;repository_impl/raw_video_service"
+)
 
 readonly file_service_proto_to_generated
 readonly preprocessor_service_proto_to_generated
-
+readonly dag_scheduler_service_proto_file_to_generated_dir
 
 generate_proto(){
     local proto_path=$1
@@ -74,6 +79,15 @@ generate_proto_for_service() {
             done
             wait
             ;;
+        $DAG_SCHEDULER_SERVICE_IDENT)
+            for proto_file in ${!dag_scheduler_service_proto_file_to_generated_dir[@]}; do
+                IFS=";" read -r go_out_ident go_grpc_out_ident <<< "${dag_scheduler_service_proto_file_to_generated_dir[$proto_file]}"
+                go_out_dir="$DAG_SCHEDULER_SERVICE_IDENT/$go_out_ident"
+                go_grpc_out_dir="$DAG_SCHEDULER_SERVICE_IDENT/$go_grpc_out_ident"
+                generate_proto "./$PROTO_ROOT_DIR/$DAG_SCHEDULER_SERVICE_IDENT" $go_out_dir $go_grpc_out_dir "./$PROTO_ROOT_DIR/$DAG_SCHEDULER_SERVICE_IDENT/$proto_file" &
+            done
+            wait
+            ;;
         *)
             echo "Error: unknown service" $servce "requested" >&2
             exit 1
@@ -105,6 +119,15 @@ clean_proto_for_service(){
                 IFS=";" read -r go_out_ident go_grpc_out_ident <<< "${preprocessor_service_proto_file_to_generated_dir[$proto_file]}"
                 go_out_files="$PREPROCESSOR_SERVICE_IDENT/$go_out_ident/*.pb.go"
                 go_grpc_out_files="$PREPROCESSOR_SERVICE_IDENT/$go_grpc_out_ident/*.pb.go"
+                echo "Deleting: $go_out_files & $go_grpc_out_files contents"
+                rm -r $go_out_files $go_grpc_out_files 2>/dev/null || echo "No contents to remove or some files could not be deleted in $go_out_files & $go_grpc_out_files"
+            done
+            ;;
+        $DAG_SCHEDULER_SERVICE_IDENT)
+            for proto_file in ${!dag_scheduler_service_proto_file_to_generated_dir[@]}; do
+                IFS=";" read -r go_out_ident go_grpc_out_ident <<< "${dag_scheduler_service_proto_file_to_generated_dir[$proto_file]}"
+                go_out_files="$DAG_SCHEDULER_SERVICE_IDENT/$go_out_ident/*.pb.go"
+                go_grpc_out_files="$DAG_SCHEDULER_SERVICE_IDENT/$go_grpc_out_ident/*.pb.go"
                 echo "Deleting: $go_out_files & $go_grpc_out_files contents"
                 rm -r $go_out_files $go_grpc_out_files 2>/dev/null || echo "No contents to remove or some files could not be deleted in $go_out_files & $go_grpc_out_files"
             done

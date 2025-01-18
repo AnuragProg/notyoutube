@@ -10,8 +10,8 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
       POSTGRES_DB: not_youtube
-    ports:
-      - 5432:5432
+    # ports: 
+    #   - 5432:5432
     networks:
       - default
 
