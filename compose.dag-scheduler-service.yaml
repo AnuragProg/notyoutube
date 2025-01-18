@@ -16,7 +16,6 @@ services:
       USE_NOOP_DB: false
       USE_NOOP_MQ: false
       USE_NOOP_STORE: false
-      USE_NOOP_RAW_VIDEO_SERVICE: false
 
       API_PORT: 3002
       GRPC_PORT: 50053
