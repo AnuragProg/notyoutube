@@ -6,24 +6,21 @@ import (
 	"os"
 	"time"
 
-	"github.com/anuragprog/notyoutube/preprocessor-service/configs"
-	"github.com/anuragprog/notyoutube/preprocessor-service/handlers"
-	"github.com/anuragprog/notyoutube/preprocessor-service/middlewares"
-	databaseRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
-	loggerRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/logger"
-	mqRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/mq"
-	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
-	"github.com/anuragprog/notyoutube/preprocessor-service/workers"
+	"github.com/anuragprog/notyoutube/dag-scheduler-service/configs"
+	"github.com/anuragprog/notyoutube/dag-scheduler-service/handlers"
+	"github.com/anuragprog/notyoutube/dag-scheduler-service/middlewares"
+	databaseRepo "github.com/anuragprog/notyoutube/dag-scheduler-service/repository/database"
+	loggerRepo "github.com/anuragprog/notyoutube/dag-scheduler-service/repository/logger"
+	mqRepo "github.com/anuragprog/notyoutube/dag-scheduler-service/repository/mq"
+	"github.com/anuragprog/notyoutube/dag-scheduler-service/utils"
 	"github.com/labstack/echo/v4"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	// "google.golang.org/grpc"
+	// "google.golang.org/grpc/credentials/insecure"
 
-	databaseRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database"
-	loggerRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/logger"
-	mqRepoImpl "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/mq"
+	databaseRepoImpl "github.com/anuragprog/notyoutube/dag-scheduler-service/repository_impl/database"
+	loggerRepoImpl "github.com/anuragprog/notyoutube/dag-scheduler-service/repository_impl/logger"
+	mqRepoImpl "github.com/anuragprog/notyoutube/dag-scheduler-service/repository_impl/mq"
 
-	mqType "github.com/anuragprog/notyoutube/preprocessor-service/types/mq"
-	rawVideoService "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/raw_video_service"
 )
 
 func main() {
@@ -68,24 +65,6 @@ func main() {
 	var mqManager = mqRepo.NewMessageQueueManager(mq)
 
 	// setup worker listeners
-	rawVideoServiceConn, err := grpc.NewClient(configs.RAW_VIDEO_SERVICE_URL, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		panic(err)
-	}
-	defer rawVideoServiceConn.Close()
-	rawVideoServiceClient := rawVideoService.NewRawVideoServiceClient(rawVideoServiceConn)
-	rawVideoTopicCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	errChan := mqManager.SubscribeToRawVideoTopic(rawVideoTopicCtx, func(rvm *mqType.RawVideoMetadata) error {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-		return workers.DAGWorker(ctx, db, mqManager, rawVideoServiceClient, rvm)
-	})
-	go func() {
-		for err := range errChan {
-			panic(err)
-		}
-	}()
 
 	app := SetupRouter(db, appLogger, mqManager)
 	doneChan := make(chan bool)
@@ -102,7 +81,7 @@ func main() {
 	fmt.Println("Server stopped")
 }
 
-// TODO: Not yet decided which apis to give for preprocessor but need to find out
+// TODO: Not yet decided which apis to give for dag-scheduler but need to find out
 func SetupRouter(
 	db databaseRepo.Database,
 	appLogger loggerRepo.Logger,
