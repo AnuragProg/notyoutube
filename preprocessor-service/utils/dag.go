@@ -65,9 +65,9 @@ var targetAsciiResolutions = []struct {
 	},
 }
 
-// Creates dag and returns' in message queue type DAG 
+// Creates dag and returns' in message queue type DAG
 // Returns message queue type so as to directly push it to message queue
-func CreateDAG(ctx context.Context, filename string) (*mqType.DAG, error) {
+func CreateDAG(ctx context.Context, traceId uuid.UUID, filename string) (*mqType.DAG, error) {
 
 	videoExtractorWorker := &mqType.Worker{
 		Id:          uuid.NewString(),
@@ -168,6 +168,7 @@ func CreateDAG(ctx context.Context, filename string) (*mqType.DAG, error) {
 	// 1. Create DAG
 	dag := &mqType.DAG{
 		Id:           uuid.NewString(),
+		TraceId:      traceId.String(),
 		CreatedAt:    time.Now().Format(time.RFC3339),
 		Workers:      make([]*mqType.Worker, 0),
 		Dependencies: make([]*mqType.Dependency, 0),

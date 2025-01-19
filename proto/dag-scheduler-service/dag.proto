@@ -58,7 +58,8 @@ message Dependency {
 
 message DAG {
     string id = 1;
-    string created_at = 2;
-    repeated Worker workers = 3;
-    repeated Dependency dependencies = 4;
+    string trace_id = 2;
+    string created_at = 3;
+    repeated Worker workers = 4;
+    repeated Dependency dependencies = 5;
 }
