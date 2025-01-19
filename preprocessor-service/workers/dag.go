@@ -77,7 +77,7 @@ func DAGWorker(
 	}
 	defer os.Remove(filename)
 
-	dag, err := utils.CreateDAG(ctx, filename)
+	dag, err := utils.CreateDAG(ctx, uuid.MustParse(metadata.TraceId), filename)
 	if err != nil {
 		return err
 	}

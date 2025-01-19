@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +22,7 @@ func TestCreateDAG(t *testing.T){
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	dag, err := CreateDAG(ctx, filename)
+	dag, err := CreateDAG(ctx, uuid.New(), filename)
 	assert.Nil(t, err)
 
 	dagJson, _ := json.MarshalIndent(dag, "", " ")
