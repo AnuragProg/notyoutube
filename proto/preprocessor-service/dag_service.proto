@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/dag_service";
+
+import "dag.proto";
+
+
+message ListWorkersOfDAGRequest {
+    string dag_id = 1;
+}
+
+message ListWorkersOfDAGResponse {
+    repeated Worker workers = 1;
+}
+
+message ListDependenciesOfDAGRequest {
+    string dag_id = 1;
+}
+
+message ListDependenciesOfDAGResponse {
+    repeated Dependency dependencies = 1;
+}
+
+service DAGService {
+    rpc ListWorkersOfDAG(ListWorkersOfDAGRequest) returns (ListWorkersOfDAGResponse) {}
+    rpc ListDependenciesOfDAG(ListDependenciesOfDAGRequest) returns (ListDependenciesOfDAGResponse) {}
+}
+

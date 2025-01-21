@@ -12,7 +12,6 @@ CREATE TABLE worker_states(
     worker_status worker_status NOT NULL,
     start_time TIMESTAMP,
     end_time TIMESTAMP,
-    retry_count INT DEFAULT 0,
     failure_reason TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 ); 

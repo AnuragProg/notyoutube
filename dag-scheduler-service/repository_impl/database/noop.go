@@ -27,7 +27,6 @@ func (nd *NoopDatabase) CreateWorkerStates(ctx context.Context, workerStates []d
 func (nd *NoopDatabase) UpdateWorkerStateStartTime(ctx context.Context, workerStateId uuid.UUID, startTime time.Time) error { return nil }
 func (nd *NoopDatabase) UpdateWorkerStateEndTime(ctx context.Context, workerStateId uuid.UUID, endTime time.Time) error { return nil }
 func (nd *NoopDatabase) UpdateWorkerStateFailureReason(ctx context.Context, workerStateId uuid.UUID, failureReason string) error { return nil }
-func (nd *NoopDatabase) IncrementWorkerStateRetryCount(ctx context.Context, workerStateId uuid.UUID) error { return nil }
 func (nd *NoopDatabase) ListWorkerStatesOfWorker(ctx context.Context, workerId uuid.UUID) ([]dbType.WorkerState, error) { return nil, nil }
 func (nd *NoopDatabase) GetCurrentWorkerStateOfWorker(ctx context.Context, workerId uuid.UUID) (dbType.WorkerState, error) { return dbType.WorkerState{}, nil }
 func (nd *NoopDatabase) WithTransaction(ctx context.Context, fn func(repo dbRepo.Database) error) error { return nil }

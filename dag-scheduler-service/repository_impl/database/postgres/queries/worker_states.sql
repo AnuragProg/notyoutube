@@ -17,11 +17,6 @@ UPDATE worker_states
 SET failure_reason=$2
 WHERE id=$1;
 
--- name: IncrementWorkerStateRetryCount :exec
-UPDATE worker_states
-SET retry_count=retry_count+1
-WHERE id=$1;
-
 -- name: ListWorkerStatesOfWorker :many
 SELECT *
 FROM worker_states
