@@ -25,7 +25,6 @@ type Database interface {
 	UpdateWorkerStateStartTime(ctx context.Context, workerStateId uuid.UUID, startTime time.Time) error
 	UpdateWorkerStateEndTime(ctx context.Context, workerStateId uuid.UUID, endTime time.Time) error
 	UpdateWorkerStateFailureReason(ctx context.Context, workerStateId uuid.UUID, failureReason string) error
-	IncrementWorkerStateRetryCount(ctx context.Context, workerStateId uuid.UUID) error
 	ListWorkerStatesOfWorker(ctx context.Context, workerId uuid.UUID) ([]database.WorkerState, error)
 	GetCurrentWorkerStateOfWorker(ctx context.Context, workerId uuid.UUID) (database.WorkerState, error)
 

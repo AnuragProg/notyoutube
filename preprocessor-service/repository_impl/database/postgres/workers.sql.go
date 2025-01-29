@@ -11,6 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getWorkerById = `-- name: GetWorkerById :one
+SELECT id, dag_id, name, description, worker_type, worker_config
+FROM workers
+WHERE id=$1
+LIMIT 1
+`
+
+func (q *Queries) GetWorkerById(ctx context.Context, id pgtype.UUID) (Worker, error) {
+	row := q.db.QueryRow(ctx, getWorkerById, id)
+	var i Worker
+	err := row.Scan(
+		&i.ID,
+		&i.DagID,
+		&i.Name,
+		&i.Description,
+		&i.WorkerType,
+		&i.WorkerConfig,
+	)
+	return i, err
+}
+
 const listWorkersOfDAG = `-- name: ListWorkersOfDAG :many
 SELECT id, dag_id, name, description, worker_type, worker_config FROM workers WHERE dag_id = $1
 `

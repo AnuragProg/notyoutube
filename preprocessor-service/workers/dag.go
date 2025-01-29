@@ -111,23 +111,23 @@ func DAGWorker(
 			var workerConfig []byte
 			switch config := worker.GetWorkerConfig().(type){
 			case *mqType.Worker_AsciiEncoderConfig:
-				workerConfig, err = json.Marshal(map[string]any{
-					"ascii_encoder_config": map[string]any{
-						"encoding": mqType.AsciiEncoding_name[int32(config.AsciiEncoderConfig.GetEncoding())],
-						"width": config.AsciiEncoderConfig.GetWidth(),
-						"height": config.AsciiEncoderConfig.GetHeight(),
-						"fps": config.AsciiEncoderConfig.GetFps(),
-					},
-				})
+				workerConfig, err = json.Marshal(
+					dbTypes.NewAsciiEncoderConfig(
+						mqType.AsciiEncoding_name[int32(config.AsciiEncoderConfig.GetEncoding())],
+						config.AsciiEncoderConfig.GetWidth(),
+						config.AsciiEncoderConfig.GetHeight(),
+						config.AsciiEncoderConfig.GetFps(),
+					),
+				)
 			case *mqType.Worker_VideoEncoderConfig:
-				workerConfig, err = json.Marshal(map[string]any{
-					"video_encoder_config": map[string]any{
-						"encoding": mqType.VideoEncoding_name[int32(config.VideoEncoderConfig.GetEncoding())],
-						"width": config.VideoEncoderConfig.GetWidth(),
-						"height": config.VideoEncoderConfig.GetHeight(),
-						"bitrate": config.VideoEncoderConfig.GetBitrate(),
-					},
-				})
+				workerConfig, err = json.Marshal(
+					dbTypes.NewVideoEncoderConfig(
+						mqType.VideoEncoding_name[int32(config.VideoEncoderConfig.GetEncoding())],
+						config.VideoEncoderConfig.GetWidth(),
+						config.VideoEncoderConfig.GetHeight(),
+						config.VideoEncoderConfig.GetBitrate(),
+					),
+				)
 			}
 			if err != nil {
 				return err

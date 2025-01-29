@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anuragprog/notyoutube/preprocessor-service/types"
-	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
-	dbType "github.com/anuragprog/notyoutube/preprocessor-service/types/database"
 	dbRepo "github.com/anuragprog/notyoutube/preprocessor-service/repository/database"
 	"github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/database/postgres"
+	"github.com/anuragprog/notyoutube/preprocessor-service/types"
+	dbType "github.com/anuragprog/notyoutube/preprocessor-service/types/database"
+	"github.com/anuragprog/notyoutube/preprocessor-service/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -265,6 +265,118 @@ func (pd *PostgresDatabase) ListDependencyTargetsOfDAG(ctx context.Context, dagI
 	), nil
 }
 
+func (pd *PostgresDatabase) GetWorkerById(ctx context.Context, workerId uuid.UUID) (dbType.Worker, error) {
+	worker, err := pd.queries.GetWorkerById(
+		ctx, 
+		pgtype.UUID{Bytes: workerId, Valid: true},
+	)
+	if err != nil {
+		return dbType.Worker{}, err
+	}
+	return dbType.Worker{
+		ID: worker.ID.Bytes,
+		DagID: worker.DagID.Bytes,
+		Name: worker.Name,
+		Description: worker.Description.String,
+		WorkerType: types.PostgresWorkerTypeToWorkerType[worker.WorkerType],
+		WorkerConfig: worker.WorkerConfig,
+	}, nil
+}
+func (pd *PostgresDatabase) ListDependencySourcesWhereWorkerIsSource(ctx context.Context, workerId uuid.UUID) ([]dbType.DependencySource, error)  {
+	depSrcs, err := pd.queries.ListDependencySourcesWhereWorkerIsSource(ctx, pgtype.UUID{Bytes: workerId, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return utils.Map(
+		depSrcs,
+		func(src postgres.DependencySource) dbType.DependencySource {
+			return dbType.DependencySource {
+				ID: src.ID.Bytes,
+				DagID: src.DagID.Bytes,
+				DependencyID: src.DependencyID.Bytes,
+				SourceID: src.SourceID.Bytes,
+			}
+		},
+	), nil
+}
+
+func (pd *PostgresDatabase) BatchListDependencySourcesOfDependency(ctx context.Context, dependencyIds []uuid.UUID) ([]dbType.DependencySource, error) {
+	result := pd.queries.BatchListDependencySourcesOfDependency(
+		ctx,
+		utils.Map(
+			dependencyIds,
+			func(id uuid.UUID) pgtype.UUID {
+				return pgtype.UUID{Bytes: id, Valid: true}	
+			},
+		),
+	)
+
+	depSrcs := make([]dbType.DependencySource, 0)
+	var err error
+	result.Query(func(i int, ds []postgres.DependencySource, _err error) {
+		if _err != nil {
+			err = _err
+			return
+		}
+		depSrcs = append(depSrcs, utils.Map(
+			ds,
+			func(dep postgres.DependencySource) dbType.DependencySource {
+				return dbType.DependencySource{
+					ID: dep.ID.Bytes,
+					DagID: dep.DagID.Bytes,
+					DependencyID: dep.DependencyID.Bytes,
+					SourceID: dep.SourceID.Bytes,
+				}
+			},
+		)...)
+	})
+	if err != nil {
+		return nil, err
+	}
+	result.Close()
+
+	return depSrcs, nil
+}
+
+func (pd *PostgresDatabase) BatchListDependencyTargetsOfDependency(ctx context.Context, dependencyIds []uuid.UUID) ([]dbType.DependencyTarget, error) {
+	result := pd.queries.BatchListDependencyTargetsOfDependency(
+		ctx,
+		utils.Map(
+			dependencyIds,
+			func(id uuid.UUID) pgtype.UUID {
+				return pgtype.UUID{Bytes: id, Valid: true}	
+			},
+		),
+	)
+
+	depTgts := make([]dbType.DependencyTarget, 0)
+	var err error
+	result.Query(func(i int, ds []postgres.DependencyTarget, _err error) {
+		if _err != nil {
+			err = _err
+			return
+		}
+		depTgts = append(depTgts, utils.Map(
+			ds,
+			func(dep postgres.DependencyTarget) dbType.DependencyTarget {
+				return dbType.DependencyTarget{
+					ID: dep.ID.Bytes,
+					DagID: dep.DagID.Bytes,
+					DependencyID: dep.DependencyID.Bytes,
+					TargetID: dep.TargetID.Bytes,
+				}
+			},
+		)...)
+	})
+	if err != nil {
+		return nil, err
+	}
+	result.Close()
+
+	return depTgts, nil
+}
+
 func (pd *PostgresDatabase) WithTransaction(ctx context.Context, fn func(repo dbRepo.Database) error) error {
 	tx, err := pd.pool.Begin(ctx)
 	if err != nil {
@@ -281,3 +393,4 @@ func (pd *PostgresDatabase) WithTransaction(ctx context.Context, fn func(repo db
 
 	return tx.Commit(ctx)
 }
+

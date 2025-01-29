@@ -227,10 +227,6 @@ func (pd *PostgresDatabase) UpdateWorkerStateFailureReason(ctx context.Context, 
 	})
 }
 
-func (pd *PostgresDatabase) IncrementWorkerStateRetryCount(ctx context.Context, workerStateId uuid.UUID) error {
-	return pd.queries.IncrementWorkerStateRetryCount(ctx, workerStateId)
-}
-
 func (pd *PostgresDatabase) ListWorkerStatesOfWorker(ctx context.Context, workerId uuid.UUID) ([]dbType.WorkerState, error) {
 	workerStates, err := pd.queries.ListWorkerStatesOfWorker(ctx, workerId)
 	if err != nil {

@@ -43,4 +43,12 @@ var ProtoWorkerTypeToWorkerType = map[mqType.WorkerType]dbType.WorkerType{
 	mqType.WorkerType_AUDIO_EXTRACTOR:     dbType.WorkerTypeAudioExtractor,
 	mqType.WorkerType_METADATA_EXTRACTOR:  dbType.WorkerTypeMetadataExtractor,
 }
-
+var WorkerTypeToProtoWorkerType = map[dbType.WorkerType]mqType.WorkerType{
+	dbType.WorkerTypeVideoEncoder:       mqType.WorkerType_VIDEO_ENCODER,      
+	dbType.WorkerTypeAsciiEncoder:       mqType.WorkerType_ASCII_ENCODER,      
+	dbType.WorkerTypeThumbnailGenerator: mqType.WorkerType_THUMBNAIL_GENERATOR,
+	dbType.WorkerTypeAssembler:          mqType.WorkerType_ASSEMBLER,          
+	dbType.WorkerTypeVideoExtractor:     mqType.WorkerType_VIDEO_EXTRACTOR,    
+	dbType.WorkerTypeAudioExtractor:     mqType.WorkerType_AUDIO_EXTRACTOR,    
+	dbType.WorkerTypeMetadataExtractor:  mqType.WorkerType_METADATA_EXTRACTOR, 
+}

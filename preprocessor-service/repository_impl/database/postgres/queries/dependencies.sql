@@ -19,3 +19,18 @@ SELECT * FROM dependency_sources WHERE dependency_id = $1;
 
 -- name: ListDependencyTargetsOfDependency :many
 SELECT * FROM dependency_targets WHERE dependency_id = $1;
+
+-- name: ListDependencySourcesWhereWorkerIsSource :many
+SELECT * 
+FROM dependency_sources
+WHERE source_id=sqlc.arg(worker_id);
+
+-- name: BatchListDependencySourcesOfDependency :batchmany
+SELECT * 
+FROM dependency_sources
+WHERE dependency_id=$1;
+
+-- name: BatchListDependencyTargetsOfDependency :batchmany
+SELECT *
+FROM dependency_targets
+WHERE dependency_id=$1;

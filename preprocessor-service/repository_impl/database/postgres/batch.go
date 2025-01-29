@@ -17,6 +17,136 @@ var (
 	ErrBatchAlreadyClosed = errors.New("batch already closed")
 )
 
+const batchListDependencySourcesOfDependency = `-- name: BatchListDependencySourcesOfDependency :batchmany
+SELECT id, dag_id, dependency_id, source_id 
+FROM dependency_sources
+WHERE dependency_id=$1
+`
+
+type BatchListDependencySourcesOfDependencyBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) BatchListDependencySourcesOfDependency(ctx context.Context, dependencyID []pgtype.UUID) *BatchListDependencySourcesOfDependencyBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range dependencyID {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(batchListDependencySourcesOfDependency, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &BatchListDependencySourcesOfDependencyBatchResults{br, len(dependencyID), false}
+}
+
+func (b *BatchListDependencySourcesOfDependencyBatchResults) Query(f func(int, []DependencySource, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []DependencySource
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var i DependencySource
+				if err := rows.Scan(
+					&i.ID,
+					&i.DagID,
+					&i.DependencyID,
+					&i.SourceID,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *BatchListDependencySourcesOfDependencyBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
+const batchListDependencyTargetsOfDependency = `-- name: BatchListDependencyTargetsOfDependency :batchmany
+SELECT id, dag_id, dependency_id, target_id
+FROM dependency_targets
+WHERE dependency_id=$1
+`
+
+type BatchListDependencyTargetsOfDependencyBatchResults struct {
+	br     pgx.BatchResults
+	tot    int
+	closed bool
+}
+
+func (q *Queries) BatchListDependencyTargetsOfDependency(ctx context.Context, dependencyID []pgtype.UUID) *BatchListDependencyTargetsOfDependencyBatchResults {
+	batch := &pgx.Batch{}
+	for _, a := range dependencyID {
+		vals := []interface{}{
+			a,
+		}
+		batch.Queue(batchListDependencyTargetsOfDependency, vals...)
+	}
+	br := q.db.SendBatch(ctx, batch)
+	return &BatchListDependencyTargetsOfDependencyBatchResults{br, len(dependencyID), false}
+}
+
+func (b *BatchListDependencyTargetsOfDependencyBatchResults) Query(f func(int, []DependencyTarget, error)) {
+	defer b.br.Close()
+	for t := 0; t < b.tot; t++ {
+		var items []DependencyTarget
+		if b.closed {
+			if f != nil {
+				f(t, items, ErrBatchAlreadyClosed)
+			}
+			continue
+		}
+		err := func() error {
+			rows, err := b.br.Query()
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var i DependencyTarget
+				if err := rows.Scan(
+					&i.ID,
+					&i.DagID,
+					&i.DependencyID,
+					&i.TargetID,
+				); err != nil {
+					return err
+				}
+				items = append(items, i)
+			}
+			return rows.Err()
+		}()
+		if f != nil {
+			f(t, items, err)
+		}
+	}
+}
+
+func (b *BatchListDependencyTargetsOfDependencyBatchResults) Close() error {
+	b.closed = true
+	return b.br.Close()
+}
+
 const createDependencies = `-- name: CreateDependencies :batchexec
 INSERT INTO dependencies(id, dag_id)
 VALUES ($1, $2)

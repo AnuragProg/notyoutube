@@ -64,6 +64,37 @@ func (q *Queries) ListDependencySourcesOfDependency(ctx context.Context, depende
 	return items, nil
 }
 
+const listDependencySourcesWhereWorkerIsSource = `-- name: ListDependencySourcesWhereWorkerIsSource :many
+SELECT id, dag_id, dependency_id, source_id 
+FROM dependency_sources
+WHERE source_id=$1
+`
+
+func (q *Queries) ListDependencySourcesWhereWorkerIsSource(ctx context.Context, workerID pgtype.UUID) ([]DependencySource, error) {
+	rows, err := q.db.Query(ctx, listDependencySourcesWhereWorkerIsSource, workerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DependencySource
+	for rows.Next() {
+		var i DependencySource
+		if err := rows.Scan(
+			&i.ID,
+			&i.DagID,
+			&i.DependencyID,
+			&i.SourceID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listDependencyTargetsOfDependency = `-- name: ListDependencyTargetsOfDependency :many
 SELECT id, dag_id, dependency_id, target_id FROM dependency_targets WHERE dependency_id = $1
 `

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/anuragprog/notyoutube/dag-scheduler-service/repository_impl/dag_service";
+option go_package = "github.com/anuragprog/notyoutube/preprocessor-service/repository_impl/dag_service";
 
 import "dag.proto";
 
