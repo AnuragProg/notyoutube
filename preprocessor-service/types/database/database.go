@@ -51,3 +51,45 @@ type Worker struct {
 	WorkerType   WorkerType `json:"worker_type"`
 	WorkerConfig []byte     `json:"worker_config"`
 }
+
+type AsciiEncoderConfig struct {
+	Config struct {
+		Encoding string `json:"encoding"`
+		Width    uint32 `json:"width"`
+		Height   uint32 `json:"height"`
+		Fps      uint32 `json:"fps"`
+	} `json:"ascii_encoder_config"`
+}
+func NewAsciiEncoderConfig(
+	encoding string,
+	width, height, fps uint32,
+) AsciiEncoderConfig {
+	config := AsciiEncoderConfig{}
+	config.Config.Encoding = encoding
+	config.Config.Width = width
+	config.Config.Height = height
+	config.Config.Fps = fps
+
+	return config
+}
+
+type VideoEncoderConfig struct {
+	Config struct {
+		Encoding string `json:"encoding"`
+		Width    uint32 `json:"width"`
+		Height   uint32 `json:"height"`
+		Bitrate  uint32 `json:"bitrate"`
+	} `json:"video_encoder_config"`
+}
+func NewVideoEncoderConfig(
+	encoding string,
+	width, height, bitrate uint32,
+) VideoEncoderConfig {
+	config := VideoEncoderConfig{}
+	config.Config.Encoding = encoding
+	config.Config.Width = width
+	config.Config.Height = height
+	config.Config.Bitrate = bitrate
+
+	return config
+}

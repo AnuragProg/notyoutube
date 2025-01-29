@@ -4,8 +4,39 @@ option go_package = "github.com/anuragprog/notyoutube/dag-scheduler-service/repo
 
 import "dag.proto";
 
-service DAGService {
 
+message ListWorkersOfDAGRequest {
+    string dag_id = 1;
+}
+message ListWorkersOfDAGResponse {
+    repeated Worker workers = 1;
 }
 
+message ListDependenciesOfDAGRequest {
+    string dag_id = 1;
+}
+message ListDependenciesOfDAGResponse {
+    repeated Dependency dependencies = 1;
+}
+
+message GetWorkerRequest {
+    string worker_id = 1;
+}
+message GetWorkerResponse {
+    Worker worker = 1;
+}
+
+message GetDependenciesWhereWorkerIsSourceRequest {
+    string worker_id = 1;
+}
+message GetDependenciesWhereWorkerIsSourceResponse {
+    repeated Dependency dependencies = 1;
+}
+
+service DAGService {
+    rpc ListWorkersOfDAG(ListWorkersOfDAGRequest) returns (ListWorkersOfDAGResponse) {}
+    rpc ListDependenciesOfDAG(ListDependenciesOfDAGRequest) returns (ListDependenciesOfDAGResponse) {}
+    rpc GetWorker(GetWorkerRequest) returns (GetWorkerResponse) {}
+    rpc GetDependenciesWhereWorkerIsSource(GetDependenciesWhereWorkerIsSourceRequest) returns (GetDependenciesWhereWorkerIsSourceResponse) {}
+}
 
